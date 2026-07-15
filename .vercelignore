@@ -1,0 +1,5 @@
+# Foundry/Solidity project — not part of the Next.js frontend build.
+contracts/
+
+# Local Prisma migration artifacts (schema is applied out-of-band).
+prisma/migrations/
