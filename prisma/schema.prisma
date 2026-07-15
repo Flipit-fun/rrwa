@@ -2,8 +2,7 @@
 // state; this DB holds descriptive metadata that doesn't belong on-chain.
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
