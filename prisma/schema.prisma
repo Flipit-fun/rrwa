@@ -1,0 +1,73 @@
+// RRWA off-chain metadata. On-chain is the source of truth for money and
+// state; this DB holds descriptive metadata that doesn't belong on-chain.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AssetType {
+  RESIDENTIAL
+  COMMERCIAL
+  WAREHOUSE
+  LAND
+  OTHER
+}
+
+enum KybStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+/// One row per on-chain Raise. Linked by the raise contract address.
+model Asset {
+  id            String     @id @default(cuid())
+  // On-chain link. Null until the raise is created on-chain, then backfilled.
+  raiseAddress  String?    @unique
+  lister        String // wallet address of the lister
+  name          String
+  city          String
+  region        String
+  description   String
+  assetType     AssetType
+  // Cached listing terms (authoritative copy lives on-chain).
+  targetUsdc    String // USDC base units as string (bigint-safe)
+  apyBps        Int
+  kybStatus     KybStatus  @default(PENDING)
+  coverImageUrl String?
+  images        AssetImage[]
+  kybDocs       KybDoc[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([lister])
+  @@index([raiseAddress])
+}
+
+model AssetImage {
+  id      String @id @default(cuid())
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId String
+  url     String
+  alt     String?
+  sort    Int    @default(0)
+
+  @@index([assetId])
+}
+
+model KybDoc {
+  id        String    @id @default(cuid())
+  asset     Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId   String
+  label     String
+  url       String
+  status    KybStatus @default(SUBMITTED)
+  createdAt DateTime  @default(now())
+
+  @@index([assetId])
+}
