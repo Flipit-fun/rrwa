@@ -1,22 +1,15 @@
 import { defineChain } from "viem";
 
-function requireEnv(name: string, value: string | undefined): string {
-  if (!value || value.trim() === "") {
-    // In the browser we surface a clear console error; the UI degrades to a
-    // "configuration needed" state rather than crashing the whole tree.
-    if (typeof window !== "undefined") {
-      console.error(`Missing required env var: ${name}`);
-    }
-    return "";
-  }
+function readEnv(value: string | undefined): string {
+  // Missing values are expected before `.env` is filled in. The UI degrades to
+  // a "configuration needed" state via isChainConfigured()/areContractsConfigured(),
+  // so we don't log a scary error here.
+  if (!value || value.trim() === "") return "";
   return value;
 }
 
 const envChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "0");
-const envRpcUrl = requireEnv(
-  "NEXT_PUBLIC_RPC_URL",
-  process.env.NEXT_PUBLIC_RPC_URL
-);
+const envRpcUrl = readEnv(process.env.NEXT_PUBLIC_RPC_URL);
 const chainName = process.env.NEXT_PUBLIC_CHAIN_NAME ?? "Robinhood Chain";
 const nativeSymbol = process.env.NEXT_PUBLIC_NATIVE_SYMBOL ?? "ETH";
 const nativeDecimals = Number(process.env.NEXT_PUBLIC_NATIVE_DECIMALS ?? "18");

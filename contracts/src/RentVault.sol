@@ -98,12 +98,16 @@ contract RentVault is ReentrancyGuard {
     }
 
     /// @dev Total streamed-per-share up to `block.timestamp`.
+    ///      Accrues directly from totalRent/DURATION (not the truncated
+    ///      per-second `rentRate`) so the full rent streams out with no dust.
     function rewardPerShare() public view returns (uint256) {
         if (!active || totalShares == 0) return rewardPerShareStored;
         uint256 clampedNow = block.timestamp < endTime ? block.timestamp : endTime;
         if (clampedNow <= lastUpdateTime) return rewardPerShareStored;
         uint256 elapsed = clampedNow - lastUpdateTime;
-        return rewardPerShareStored + (rentRate * elapsed * ACC_PRECISION) / totalShares;
+        return
+            rewardPerShareStored
+                + (totalRent * elapsed * ACC_PRECISION) / (DURATION * totalShares);
     }
 
     /// @notice Yield accrued to `account` but not yet claimed, in USDC base units.

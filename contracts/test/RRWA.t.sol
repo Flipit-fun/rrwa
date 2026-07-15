@@ -148,10 +148,11 @@ contract RRWATest is Test {
         vm.warp(block.timestamp + duration / 2);
 
         uint256 earned = vault.earned(alice);
-        // alice should have ~half the total rent (rounding via per-second rate)
-        uint256 expected = (vault.rentRate() * (duration / 2));
+        // sole holder for half the term -> exactly half the total rent
+        // (accrual streams totalRent/DURATION at full precision, no dust).
+        uint256 expected = totalRent / 2;
         assertApproxEqAbs(earned, expected, 1e6);
-        assertApproxEqRel(earned, totalRent / 2, 0.01e18);
+        assertApproxEqRel(earned, totalRent / 2, 0.001e18);
 
         // claim pulls USDC
         uint256 before = usdc.balanceOf(alice);

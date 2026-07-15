@@ -7,7 +7,7 @@ import SiteFooter from "@/components/SiteFooter";
 import GlitchWord from "@/components/GlitchWord";
 import RaiseRow from "@/components/RaiseRow";
 import { LoadingRows, EmptyState, ErrorState, ConfigNeeded } from "@/components/States";
-import { useRaisesWithMeta } from "@/hooks/useRaises";
+import { useRaisesWithMeta, type RaiseWithMeta } from "@/hooks/useRaises";
 import { areContractsConfigured } from "@/lib/contracts/addresses";
 
 export default function MarketPage() {
@@ -80,9 +80,7 @@ function BuyList({
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
-  raises: ReturnType<typeof useRaisesWithMeta>["data"] extends infer T
-    ? NonNullable<T>
-    : never;
+  raises: RaiseWithMeta[];
 }) {
   if (!areContractsConfigured()) return <ConfigNeeded what="The marketplace" />;
   if (isLoading) return <LoadingRows count={5} />;
