@@ -2,11 +2,15 @@
 // state; this DB holds descriptive metadata that doesn't belong on-chain.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
+  // Isolate RRWA tables in their own schema so they never touch other
+  // projects' tables living in `public` on this shared database.
+  schemas  = ["rrwa"]
 }
 
 enum AssetType {
@@ -15,6 +19,8 @@ enum AssetType {
   WAREHOUSE
   LAND
   OTHER
+
+  @@schema("rrwa")
 }
 
 enum KybStatus {
@@ -22,6 +28,8 @@ enum KybStatus {
   SUBMITTED
   APPROVED
   REJECTED
+
+  @@schema("rrwa")
 }
 
 /// One row per on-chain Raise. Linked by the raise contract address.
@@ -47,6 +55,7 @@ model Asset {
 
   @@index([lister])
   @@index([raiseAddress])
+  @@schema("rrwa")
 }
 
 model AssetImage {
@@ -58,6 +67,7 @@ model AssetImage {
   sort    Int    @default(0)
 
   @@index([assetId])
+  @@schema("rrwa")
 }
 
 model KybDoc {
@@ -70,4 +80,5 @@ model KybDoc {
   createdAt DateTime  @default(now())
 
   @@index([assetId])
+  @@schema("rrwa")
 }
