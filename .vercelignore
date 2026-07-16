@@ -1,5 +1,6 @@
 # Foundry/Solidity project — not part of the Next.js frontend build.
-contracts/
+# Leading slash anchors to repo root so it does NOT match src/lib/contracts/.
+/contracts/
 
 # Local Prisma migration artifacts (schema is applied out-of-band).
-prisma/migrations/
+/prisma/migrations/
