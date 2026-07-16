@@ -10,7 +10,7 @@ import GlitchWord from "@/components/GlitchWord";
 import { EmptyState, ErrorState, ConfigNeeded } from "@/components/States";
 import { useRaise } from "@/hooks/useRaises";
 import {
-  useUsdcPosition,
+  useUsdgPosition,
   useSharePosition,
   useFund,
   useWithdraw,
@@ -21,7 +21,7 @@ import {
   formatUsd,
   formatApyBps,
   progressPct,
-  usdcToNumber,
+  usdgToNumber,
 } from "@/lib/format";
 import { RaiseState } from "@/lib/contracts/abis";
 import { areContractsConfigured } from "@/lib/contracts/addresses";
@@ -91,7 +91,7 @@ function AssetDetail({
   const guard = useNetworkGuard();
   const [amount, setAmount] = useState("");
 
-  const { balance } = useUsdcPosition(raise.address);
+  const { balance } = useUsdgPosition(raise.address);
   const { shares, earned } = useSharePosition(
     raise.shareToken,
     raise.rentVault
@@ -111,7 +111,7 @@ function AssetDetail({
 
   const shareBalance = (shares.data as bigint | undefined) ?? 0n;
   const earnedAmount = (earned.data as bigint | undefined) ?? 0n;
-  const usdcBalance = (balance.data as bigint | undefined) ?? 0n;
+  const usdgBalance = (balance.data as bigint | undefined) ?? 0n;
 
   async function onFund() {
     const ok = await fund(amount);
@@ -225,7 +225,7 @@ function AssetDetail({
                   {formatUsd(remaining)} left to reach target · shares mint 1:1
                 </p>
                 <div className="field">
-                  <label htmlFor="amount">Amount (USDC)</label>
+                  <label htmlFor="amount">Amount (USDG)</label>
                   <input
                     id="amount"
                     inputMode="decimal"
@@ -234,7 +234,7 @@ function AssetDetail({
                     onChange={(e) => setAmount(e.target.value)}
                   />
                   <div className="hint">
-                    Wallet balance: {formatUsd(usdcBalance)}
+                    Wallet balance: {formatUsd(usdgBalance)}
                   </div>
                 </div>
                 <button
@@ -333,7 +333,7 @@ function AssetDetail({
                     justifyContent: "center",
                     marginTop: 18,
                   }}
-                  disabled={claiming || usdcToNumber(earnedAmount) <= 0}
+                  disabled={claiming || usdgToNumber(earnedAmount) <= 0}
                   onClick={async () => {
                     const ok = await claim();
                     if (ok) {

@@ -40,7 +40,7 @@ contract RRWATest is Test {
 
     function _createRaise() internal returns (Raise raise) {
         vm.prank(lister);
-        address addr = factory.createRaise(TARGET, APY_BPS, "2BHK Apartment Jaipur", "RRWA-JAI");
+        address addr = factory.createRaise(TARGET, APY_BPS, "2BR Apartment Los Angeles", "RRWA-LAX");
         raise = Raise(addr);
     }
 

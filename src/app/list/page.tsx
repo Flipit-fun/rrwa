@@ -14,7 +14,7 @@ import { useCreateRaise } from "@/hooks/useCreateRaise";
 import { createAsset, linkRaiseAddress } from "@/app/actions/assets";
 import { areContractsConfigured } from "@/lib/contracts/addresses";
 import {
-  parseUsdc,
+  parseUsdg,
   parseApyToBps,
   formatUsd,
   requiredRentDeposit,
@@ -67,7 +67,7 @@ export default function ListPage() {
       ? (() => {
           try {
             return formatUsd(
-              requiredRentDeposit(parseUsdc(form.target), parseApyToBps(form.apy))
+              requiredRentDeposit(parseUsdg(form.target), parseApyToBps(form.apy))
             );
           } catch {
             return null;
@@ -83,7 +83,7 @@ export default function ListPage() {
     let target: bigint;
     let apyBps: number;
     try {
-      target = parseUsdc(form.target);
+      target = parseUsdg(form.target);
       apyBps = parseApyToBps(form.apy);
     } catch {
       setError("Check the target and APY values.");
@@ -257,7 +257,7 @@ export default function ListPage() {
                 <input
                   id="f-name"
                   type="text"
-                  placeholder="2BHK Apartment, Jaipur"
+                  placeholder="2BR Apartment, Los Angeles"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
@@ -270,7 +270,7 @@ export default function ListPage() {
                   <input
                     id="f-city"
                     type="text"
-                    placeholder="Jaipur"
+                    placeholder="Los Angeles"
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
                     required
@@ -281,7 +281,7 @@ export default function ListPage() {
                   <input
                     id="f-region"
                     type="text"
-                    placeholder="Rajasthan"
+                    placeholder="California"
                     value={form.region}
                     onChange={(e) =>
                       setForm({ ...form, region: e.target.value })

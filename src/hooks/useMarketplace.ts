@@ -15,7 +15,7 @@ import { useToast } from "@/components/Toast";
 import { txUrl } from "@/lib/explorer";
 import { humanizeError } from "./useTxFlow";
 
-/** Approve shares to the marketplace, then list them at a USDC price. */
+/** Approve shares to the marketplace, then list them at a USDG price. */
 export function useListShares() {
   const { address } = useAccount();
   const { push, update } = useToast();

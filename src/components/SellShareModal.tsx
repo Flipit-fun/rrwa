@@ -5,8 +5,8 @@ import type { Address } from "viem";
 import { useListShares } from "@/hooks/useMarketplace";
 import {
   formatUsd,
-  parseUsdc,
-  usdcToNumber,
+  parseUsdg,
+  usdgToNumber,
 } from "@/lib/format";
 
 interface SellShareModalProps {
@@ -40,7 +40,7 @@ export default function SellShareModal({
 
   let price = 0n;
   try {
-    price = priceStr ? parseUsdc(priceStr) : 0n;
+    price = priceStr ? parseUsdg(priceStr) : 0n;
   } catch {
     /* handled on submit */
   }
@@ -53,8 +53,8 @@ export default function SellShareModal({
     setErr(null);
     let shareAmount: bigint;
     try {
-      shareAmount = parseUsdc(sharesStr);
-      const p = parseUsdc(priceStr);
+      shareAmount = parseUsdg(sharesStr);
+      const p = parseUsdg(priceStr);
       if (shareAmount <= 0n || p <= 0n) {
         setErr("Enter a share amount and a price.");
         return;
@@ -95,7 +95,7 @@ export default function SellShareModal({
         </div>
 
         <div className="field">
-          <label htmlFor="s-price">Asking price (USDC)</label>
+          <label htmlFor="s-price">Asking price (USDG)</label>
           <input
             id="s-price"
             inputMode="decimal"
@@ -166,7 +166,7 @@ export default function SellShareModal({
           <button
             className="btn"
             onClick={onConfirm}
-            disabled={busy || usdcToNumber(price) <= 0}
+            disabled={busy || usdgToNumber(price) <= 0}
           >
             {busy ? "Working..." : "List for sale"}
           </button>

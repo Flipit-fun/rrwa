@@ -10,7 +10,7 @@ import {
 import { decodeEventLog, type Address } from "viem";
 import { wagmiConfig } from "@/lib/wagmi";
 import { factoryAbi, erc20Abi, raiseAbi } from "@/lib/contracts/abis";
-import { FACTORY_ADDRESS, USDC_ADDRESS } from "@/lib/contracts/addresses";
+import { FACTORY_ADDRESS, USDG_ADDRESS } from "@/lib/contracts/addresses";
 import { useToast } from "@/components/Toast";
 import { txUrl } from "@/lib/explorer";
 import { humanizeError } from "./useTxFlow";
@@ -19,7 +19,7 @@ import { requiredRentDeposit } from "@/lib/format";
 /**
  * Two-step listing flow:
  *   1) createRaise on the factory -> returns the new raise address (from event)
- *   2) approve USDC for the raise's RentVault, then depositRent
+ *   2) approve USDG for the raise's RentVault, then depositRent
  *
  * The caller drives a stepper off the returned step callbacks.
  */
@@ -109,7 +109,7 @@ export function useCreateRaise() {
   /** Step 2: approve + deposit 3 years of rent into the raise's vault. */
   const depositRent = useCallback(
     async (raiseAddress: Address): Promise<boolean> => {
-      if (!USDC_ADDRESS || !address) return false;
+      if (!USDG_ADDRESS || !address) return false;
 
       // read the required rent + the vault address from the raise
       const rentVault = (await readContract(wagmiConfig, {
@@ -126,13 +126,13 @@ export function useCreateRaise() {
       const toastId = push({
         kind: "pending",
         title: "Securing rent",
-        message: "Approve USDC for the rent vault.",
+        message: "Approve USDG for the rent vault.",
       });
 
       try {
         // approve the vault to pull the rent
         const current = (await readContract(wagmiConfig, {
-          address: USDC_ADDRESS,
+          address: USDG_ADDRESS,
           abi: erc20Abi,
           functionName: "allowance",
           args: [address, rentVault],
@@ -140,7 +140,7 @@ export function useCreateRaise() {
 
         if (current < rent) {
           const approveHash = await writeContract(wagmiConfig, {
-            address: USDC_ADDRESS,
+            address: USDG_ADDRESS,
             abi: erc20Abi,
             functionName: "approve",
             args: [rentVault, rent],

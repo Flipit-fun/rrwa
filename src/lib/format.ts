@@ -1,40 +1,40 @@
 /**
- * Shared money formatting/parsing. On-chain USDC uses 6 decimals.
- * Every USD value in the app flows through these helpers so display and
- * on-chain parsing never drift apart.
+ * Shared money formatting/parsing. On-chain USDG (Global Dollar, the stablecoin
+ * on Robinhood Chain) uses 6 decimals. Every USD value in the app flows through
+ * these helpers so display and on-chain parsing never drift apart.
  */
 
-export const USDC_DECIMALS = 6;
+export const USDG_DECIMALS = 6;
 
-/** Parse a human string like "10,000" or "10000.50" into USDC base units (bigint). */
-export function parseUsdc(value: string): bigint {
+/** Parse a human string like "10,000" or "10000.50" into USDG base units (bigint). */
+export function parseUsdg(value: string): bigint {
   const cleaned = value.replace(/[,\s$]/g, "").trim();
   if (cleaned === "" || cleaned === ".") return 0n;
   if (!/^\d*\.?\d*$/.test(cleaned)) {
-    throw new Error(`Invalid USDC amount: "${value}"`);
+    throw new Error(`Invalid USDG amount: "${value}"`);
   }
   const [whole, fraction = ""] = cleaned.split(".");
-  const paddedFraction = (fraction + "0".repeat(USDC_DECIMALS)).slice(
+  const paddedFraction = (fraction + "0".repeat(USDG_DECIMALS)).slice(
     0,
-    USDC_DECIMALS
+    USDG_DECIMALS
   );
   const wholePart = whole === "" ? 0n : BigInt(whole);
-  const base = wholePart * 10n ** BigInt(USDC_DECIMALS);
+  const base = wholePart * 10n ** BigInt(USDG_DECIMALS);
   const frac = paddedFraction === "" ? 0n : BigInt(paddedFraction);
   return base + frac;
 }
 
-/** Convert USDC base units (bigint) into a plain decimal number of dollars. */
-export function usdcToNumber(base: bigint): number {
-  return Number(base) / 10 ** USDC_DECIMALS;
+/** Convert USDG base units (bigint) into a plain decimal number of dollars. */
+export function usdgToNumber(base: bigint): number {
+  return Number(base) / 10 ** USDG_DECIMALS;
 }
 
-/** Format USDC base units as a USD currency string, e.g. "$10,000". */
+/** Format USDG base units as a USD currency string, e.g. "$10,000". */
 export function formatUsd(
   base: bigint,
   opts: { cents?: boolean } = {}
 ): string {
-  const value = usdcToNumber(base);
+  const value = usdgToNumber(base);
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -82,7 +82,7 @@ export function progressPct(raised: bigint, target: bigint): number {
 /**
  * Required upfront rent deposit for a raise:
  *   target * apyBps/10000 * 3 years
- * Returned in USDC base units.
+ * Returned in USDG base units.
  */
 export function requiredRentDeposit(target: bigint, apyBps: number): bigint {
   return (target * BigInt(apyBps) * 3n) / 10000n;

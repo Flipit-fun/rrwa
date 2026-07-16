@@ -11,28 +11,28 @@ import {
   rentVaultAbi,
   shareTokenAbi,
 } from "@/lib/contracts/abis";
-import { USDC_ADDRESS } from "@/lib/contracts/addresses";
+import { USDG_ADDRESS } from "@/lib/contracts/addresses";
 import { useTxFlow } from "./useTxFlow";
-import { parseUsdc } from "@/lib/format";
+import { parseUsdg } from "@/lib/format";
 
-/** Read the connected wallet's USDC balance + allowance for a raise. */
-export function useUsdcPosition(raiseAddress?: Address) {
+/** Read the connected wallet's USDG balance + allowance for a raise. */
+export function useUsdgPosition(raiseAddress?: Address) {
   const { address } = useAccount();
 
   const balance = useReadContract({
-    address: USDC_ADDRESS,
+    address: USDG_ADDRESS,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    query: { enabled: !!address && !!USDC_ADDRESS },
+    query: { enabled: !!address && !!USDG_ADDRESS },
   });
 
   const allowance = useReadContract({
-    address: USDC_ADDRESS,
+    address: USDG_ADDRESS,
     abi: erc20Abi,
     functionName: "allowance",
     args: address && raiseAddress ? [address, raiseAddress] : undefined,
-    query: { enabled: !!address && !!raiseAddress && !!USDC_ADDRESS },
+    query: { enabled: !!address && !!raiseAddress && !!USDG_ADDRESS },
   });
 
   return { balance, allowance };
@@ -64,20 +64,20 @@ export function useSharePosition(
   return { shares, earned };
 }
 
-/** Approve (if needed) then fund a raise with a USDC amount string. */
+/** Approve (if needed) then fund a raise with a USDG amount string. */
 export function useFund(raiseAddress?: Address) {
   const { address } = useAccount();
   const { run, pending } = useTxFlow();
 
   const fund = useCallback(
     async (amountStr: string): Promise<boolean> => {
-      if (!raiseAddress || !address || !USDC_ADDRESS) return false;
-      const amount = parseUsdc(amountStr);
+      if (!raiseAddress || !address || !USDG_ADDRESS) return false;
+      const amount = parseUsdg(amountStr);
       if (amount <= 0n) return false;
 
       // check current allowance; approve only if short
       const current = (await readContract(wagmiConfig, {
-        address: USDC_ADDRESS,
+        address: USDG_ADDRESS,
         abi: erc20Abi,
         functionName: "allowance",
         args: [address, raiseAddress],
@@ -86,12 +86,12 @@ export function useFund(raiseAddress?: Address) {
       if (current < amount) {
         const approved = await run(
           {
-            address: USDC_ADDRESS,
+            address: USDG_ADDRESS,
             abi: erc20Abi,
             functionName: "approve",
             args: [raiseAddress, amount],
           },
-          { pending: "Approving USDC", success: "USDC approved" }
+          { pending: "Approving USDG", success: "USDG approved" }
         );
         if (!approved) return false;
       }

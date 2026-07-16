@@ -81,7 +81,7 @@ export default function Home() {
             </div>
             <div className="hf">
               <b>1:1</b>
-              <span>USDC to shares</span>
+              <span>USDG to shares</span>
             </div>
             <div className="hf">
               <b>50%</b>

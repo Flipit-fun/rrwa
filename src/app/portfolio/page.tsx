@@ -11,7 +11,7 @@ import { EmptyState, ErrorState, ConfigNeeded } from "@/components/States";
 import { usePortfolio, type Position } from "@/hooks/usePortfolio";
 import { useClaimYield } from "@/hooks/useRaiseActions";
 import { useNetworkGuard } from "@/hooks/useNetworkGuard";
-import { formatUsd, formatApyBps, usdcToNumber } from "@/lib/format";
+import { formatUsd, formatApyBps, usdgToNumber } from "@/lib/format";
 import { areContractsConfigured } from "@/lib/contracts/addresses";
 
 export default function PortfolioPage() {
@@ -176,7 +176,7 @@ function PositionRow({
       <div style={{ display: "flex", gap: 10 }}>
         <button
           className="btn"
-          disabled={pending || usdcToNumber(position.earned) <= 0}
+          disabled={pending || usdgToNumber(position.earned) <= 0}
           onClick={async () => {
             const ok = await claim();
             if (ok) onChanged();

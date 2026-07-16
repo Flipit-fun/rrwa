@@ -32,10 +32,10 @@ export const createAssetSchema = z.object({
   description: z.string().min(10, "Add a short description").max(4000),
   assetType: assetTypeEnum,
   lister: addressSchema,
-  // USDC base units as a decimal string (bigint-safe over the wire).
+  // USDG base units (6 decimals) as a decimal string (bigint-safe over the wire).
   targetUsdc: z
     .string()
-    .regex(/^\d+$/, "Target must be USDC base units")
+    .regex(/^\d+$/, "Target must be USDG base units")
     .refine((v) => BigInt(v) > 0n, "Target must be greater than zero"),
   apyBps: z
     .number()

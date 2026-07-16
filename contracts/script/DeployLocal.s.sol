@@ -45,18 +45,18 @@ contract DeployLocal is Script {
             factory,
             usdc,
             deployer,
-            "2BHK Apartment, Jaipur",
-            "RRWA-JAI",
+            "2BR Apartment, Los Angeles",
+            "RRWA-LAX",
             10_000e6,
             950 // 9.5%
         );
 
         // (b) A couple of raises still open for funding.
-        _createOpen(factory, usdc, deployer, "Retail Shopfront, Pune", "RRWA-PUN", 25_000e6, 1100);
-        _createOpen(factory, usdc, deployer, "Warehouse Unit, Ludhiana", "RRWA-LDH", 40_000e6, 1240);
+        _createOpen(factory, usdc, deployer, "Retail Shopfront, London", "RRWA-LDN", 25_000e6, 1100);
+        _createOpen(factory, usdc, deployer, "Warehouse Unit, Rotterdam", "RRWA-RTM", 40_000e6, 1240);
         // Partially fund one of them for a nicer progress bar.
         address farm =
-            _createOpen(factory, usdc, deployer, "Farm Plot, Hisar", "RRWA-HSR", 10_000e6, 1010);
+            _createOpen(factory, usdc, deployer, "Farm Plot, Fresno", "RRWA-FRS", 10_000e6, 1010);
         _depositRentAndFund(farm, usdc, 8_800e6);
 
         vm.stopBroadcast();
