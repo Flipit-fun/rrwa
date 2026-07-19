@@ -1,28 +1,42 @@
 "use client";
 
 /**
- * Hand-rolled SVG area chart comparing typical stablecoin yield against
- * RRWA's top currently-listed property APY, both compounding on a $10,000
- * principal over 12 months. Smoothed curves + gradient fills instead of
- * plain straight lines, matching the site's hand-built visual style (see
- * FlowField) without pulling in a charting library for two curves.
+ * Hand-rolled SVG area chart of APY *rate* over a full financial year (Jan
+ * through Dec) — not compounding dollar growth. The stablecoin line wobbles
+ * up and down the way real lending rates do (e.g. Aave/Compound USDC
+ * supply APY), capped around 8%. The RRWA line climbs to the platform's top
+ * listed rate and is called out with a marker once it gets there.
+ *
+ * Both series are fixed, hand-tuned arrays (not Math.random) so the chart
+ * renders identically on server and client and looks the same on every load.
  */
-const MONTHS = 13; // month 0 (start) through month 12
-const PRINCIPAL = 10_000;
-const STABLECOIN_APY = 0.08; // typical stablecoin lending yield, for comparison
+const MONTH_LABELS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 
-function growthSeries(apy: number): number[] {
-  return Array.from({ length: MONTHS }, (_, m) => {
-    const years = m / 12;
-    return PRINCIPAL * (1 + apy * years);
+// Realistic-looking stablecoin lending APY over a year: drifts and wobbles,
+// touching a high of 8% but mostly sitting well below it.
+const STABLE_SERIES = [4.6, 5.3, 6.8, 5.9, 4.2, 5.1, 6.4, 8.0, 7.1, 5.6, 4.8, 5.4];
+
+/** Builds the RRWA series: rises from a base rate up to `topApy`, then holds. */
+function buildRrwaSeries(topApy: number): number[] {
+  const base = Math.max(topApy - 4.5, 6);
+  const climbMonths = 7; // reaches the top rate by ~month 8, then plateaus
+  return MONTH_LABELS.map((_, i) => {
+    if (i >= climbMonths) return topApy;
+    const t = i / climbMonths;
+    // ease-out curve so it climbs fast then levels into the plateau smoothly
+    const eased = 1 - Math.pow(1 - t, 2);
+    return base + (topApy - base) * eased;
   });
 }
 
 const WIDTH = 720;
 const HEIGHT = 340;
-const PAD_LEFT = 56;
+const PAD_LEFT = 48;
 const PAD_RIGHT = 24;
-const PAD_TOP = 32;
+const PAD_TOP = 44;
 const PAD_BOTTOM = 40;
 
 type Point = { x: number; y: number };
@@ -62,13 +76,12 @@ function areaPath(linePath: string, points: Point[]): string {
 }
 
 export default function YieldChart({ topApyBps }: { topApyBps: number }) {
-  const rrwaApy = topApyBps / 10000;
-  const stable = growthSeries(STABLECOIN_APY);
-  const rrwa = growthSeries(rrwaApy);
-  const maxY = Math.max(...rrwa) * 1.1;
+  const rrwaApy = topApyBps / 100; // bps -> percent
+  const rrwaSeries = buildRrwaSeries(rrwaApy);
+  const maxY = Math.max(...rrwaSeries, ...STABLE_SERIES) * 1.12;
 
-  const rrwaPoints = toPoints(rrwa, maxY);
-  const stablePoints = toPoints(stable, maxY);
+  const rrwaPoints = toPoints(rrwaSeries, maxY);
+  const stablePoints = toPoints(STABLE_SERIES, maxY);
   const rrwaLine = smoothPath(rrwaPoints);
   const stableLine = smoothPath(stablePoints);
 
@@ -77,12 +90,16 @@ export default function YieldChart({ topApyBps }: { topApyBps: number }) {
 
   const gridLines = [0, 0.25, 0.5, 0.75, 1];
 
+  // Mark the point where RRWA first reaches its top rate (plateau start).
+  const peakIndex = rrwaSeries.findIndex((v) => v >= rrwaApy - 0.01);
+  const peakPoint = rrwaPoints[peakIndex === -1 ? rrwaPoints.length - 1 : peakIndex];
+
   return (
     <div className="yield-chart">
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
-        aria-label={`Area chart comparing a $10,000 deposit growing at 8% stablecoin yield versus RRWA's top listed property APY of ${(rrwaApy * 100).toFixed(1)}% over 12 months. The RRWA line ends noticeably higher.`}
+        aria-label={`Chart of APY over a full financial year. Stablecoin lending rates fluctuate between roughly 4% and 8%. RRWA's top listed property rate climbs to ${rrwaApy.toFixed(1)}% and holds there, marked on the chart.`}
       >
         <defs>
           <linearGradient id="rrwaFill" x1="0" y1="0" x2="0" y2="1">
@@ -95,40 +112,46 @@ export default function YieldChart({ topApyBps }: { topApyBps: number }) {
           </linearGradient>
         </defs>
 
-        {/* gridlines */}
+        {/* gridlines + % labels */}
         {gridLines.map((g) => {
           const y = PAD_TOP + plotH - g * plotH;
+          const val = (g * maxY).toFixed(0);
           return (
-            <line
-              key={g}
-              x1={PAD_LEFT}
-              x2={WIDTH - PAD_RIGHT}
-              y1={y}
-              y2={y}
-              stroke="var(--hairline)"
-              strokeWidth={1}
-            />
+            <g key={g}>
+              <line
+                x1={PAD_LEFT}
+                x2={WIDTH - PAD_RIGHT}
+                y1={y}
+                y2={y}
+                stroke="var(--hairline)"
+                strokeWidth={1}
+              />
+              <text x={PAD_LEFT - 10} y={y + 4} fontSize={11} fill="var(--faint)" textAnchor="end">
+                {val}%
+              </text>
+            </g>
           );
         })}
 
-        {/* axis labels (month 0, 6, 12) */}
-        {[0, 6, 12].map((m) => {
-          const x = PAD_LEFT + (m / 12) * plotW;
+        {/* month labels */}
+        {MONTH_LABELS.map((label, i) => {
+          if (i % 2 !== 0) return null; // every other month to avoid crowding
+          const x = PAD_LEFT + (i / (MONTH_LABELS.length - 1)) * plotW;
           return (
             <text
-              key={m}
+              key={label}
               x={x}
               y={HEIGHT - 14}
               fontSize={12}
               fill="var(--faint)"
               textAnchor="middle"
             >
-              {m === 0 ? "Start" : `Mo. ${m}`}
+              {label}
             </text>
           );
         })}
 
-        {/* stablecoin area + line */}
+        {/* stablecoin area + wobbling line */}
         <path d={areaPath(stableLine, stablePoints)} fill="url(#stableFill)" stroke="none" />
         <path
           d={stableLine}
@@ -139,7 +162,7 @@ export default function YieldChart({ topApyBps }: { topApyBps: number }) {
           strokeLinecap="round"
         />
 
-        {/* RRWA area + line */}
+        {/* RRWA area + climbing line */}
         <path d={areaPath(rrwaLine, rrwaPoints)} fill="url(#rrwaFill)" stroke="none" />
         <path
           d={rrwaLine}
@@ -149,7 +172,30 @@ export default function YieldChart({ topApyBps }: { topApyBps: number }) {
           strokeLinecap="round"
         />
 
-        {/* end-point markers */}
+        {/* peak marker + callout label on the RRWA line */}
+        <line
+          x1={peakPoint.x}
+          x2={peakPoint.x}
+          y1={peakPoint.y}
+          y2={PAD_TOP - 6}
+          stroke="var(--blue)"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+          opacity={0.5}
+        />
+        <circle cx={peakPoint.x} cy={peakPoint.y} r={5.5} fill="var(--paper)" stroke="var(--blue)" strokeWidth={2.5} />
+        <text
+          x={peakPoint.x}
+          y={PAD_TOP - 14}
+          fontSize={13}
+          fontWeight={600}
+          fill="var(--blue-deep)"
+          textAnchor="middle"
+        >
+          Up to {rrwaApy.toFixed(1)}%
+        </text>
+
+        {/* end-point marker for stablecoin */}
         <circle
           cx={stablePoints[stablePoints.length - 1].x}
           cy={stablePoints[stablePoints.length - 1].y}
@@ -158,29 +204,19 @@ export default function YieldChart({ topApyBps }: { topApyBps: number }) {
           stroke="var(--faint)"
           strokeWidth={2}
         />
-        <circle
-          cx={rrwaPoints[rrwaPoints.length - 1].x}
-          cy={rrwaPoints[rrwaPoints.length - 1].y}
-          r={5.5}
-          fill="var(--paper)"
-          stroke="var(--blue)"
-          strokeWidth={2.5}
-        />
       </svg>
 
       <div className="yield-chart-legend">
         <div className="ycl-item">
           <span className="ycl-dot rrwa" />
           <span>
-            RRWA top property — <b>{(rrwaApy * 100).toFixed(1)}% APY</b> ·
-            $10,000 → ${Math.round(rrwa[rrwa.length - 1]).toLocaleString()}
+            RRWA top property — climbs to <b>{rrwaApy.toFixed(1)}% APY</b> and holds
           </span>
         </div>
         <div className="ycl-item">
           <span className="ycl-dot stable" />
           <span>
-            Typical stablecoin yield — <b>~8% APY</b> · $10,000 → $
-            {Math.round(stable[stable.length - 1]).toLocaleString()}
+            Typical stablecoin yield — fluctuates <b>4%–8% APY</b> over the year
           </span>
         </div>
       </div>
