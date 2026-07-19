@@ -28,13 +28,13 @@ type SeedProperty = {
   city: string;
   region: string;
   description: string;
-  assetType: "RESIDENTIAL";
+  assetType: "RESIDENTIAL" | "COMMERCIAL";
   targetUsd: number; // placeholder USD funding target
   minContributionUsd: number;
   maxContributionUsd: number;
   apyBps: number; // placeholder APY, real terms pending partnership agreement
-  bedrooms: number;
-  bathrooms: number;
+  bedrooms?: number;
+  bathrooms?: number;
   areaSqft: number;
   operatingStatus: "ACTIVE" | "PAUSED" | "CLOSED";
   coverImageUrl?: string;
@@ -90,18 +90,16 @@ const PROPERTIES: SeedProperty[] = [
     operatingStatus: "ACTIVE",
   },
   {
-    name: "Studio Apartment with Kitchenette in Singapore",
+    name: "Cafe in Singapore",
     city: "Singapore",
     region: "Singapore",
     description:
-      "A studio apartment with an attached kitchenette in Singapore. Full details and photos to follow — terms below are placeholders pending the final partnership agreement with the asset owner.",
-    assetType: "RESIDENTIAL",
+      "A cafe in Singapore. Full details and photos to follow — terms below are placeholders pending the final partnership agreement with the asset owner.",
+    assetType: "COMMERCIAL",
     targetUsd: 15_000,
     minContributionUsd: 500,
     maxContributionUsd: 5_000,
     apyBps: 1040,
-    bedrooms: 0,
-    bathrooms: 1,
     areaSqft: 450,
     operatingStatus: "ACTIVE",
   },
@@ -129,8 +127,8 @@ async function main() {
         minContributionUsdc: usdToUsdgBaseUnits(p.minContributionUsd),
         maxContributionUsdc: usdToUsdgBaseUnits(p.maxContributionUsd),
         apyBps: p.apyBps,
-        bedrooms: p.bedrooms,
-        bathrooms: p.bathrooms,
+        bedrooms: p.bedrooms ?? null,
+        bathrooms: p.bathrooms ?? null,
         areaSqft: p.areaSqft,
         operatingStatus: p.operatingStatus,
         kybStatus: "APPROVED",
