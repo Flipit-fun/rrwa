@@ -6,7 +6,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ShareToken } from "./ShareToken.sol";
 import { RentVault } from "./RentVault.sol";
-import { Allowlist } from "./Allowlist.sol";
 
 /**
  * @title Raise
@@ -39,7 +38,6 @@ contract Raise is ReentrancyGuard {
     uint256 public immutable apyBps; // fixed APY, basis points
     ShareToken public immutable shareToken;
     RentVault public immutable rentVault;
-    Allowlist public immutable allowlist;
 
     // Per-wallet investment bounds. minContribution applies to each
     // individual `fund()` call; maxContribution caps a wallet's cumulative
@@ -66,7 +64,6 @@ contract Raise is ReentrancyGuard {
     error NotActive();
     error NotMatured();
     error TermNotElapsed();
-    error NotAllowlisted();
     error BelowMinContribution(uint256 min);
     error ExceedsMaxContribution(uint256 max);
 
@@ -77,7 +74,6 @@ contract Raise is ReentrancyGuard {
         uint256 apyBps_,
         string memory assetName,
         string memory shareSymbol,
-        address allowlist_,
         uint256 minContribution_,
         uint256 maxContribution_
     ) {
@@ -86,7 +82,6 @@ contract Raise is ReentrancyGuard {
         target = target_;
         apyBps = apyBps_;
         state = State.Raising;
-        allowlist = Allowlist(allowlist_);
         minContribution = minContribution_;
         maxContribution = maxContribution_;
 
@@ -121,7 +116,6 @@ contract Raise is ReentrancyGuard {
     function fund(uint256 amount) external nonReentrant {
         if (state != State.Raising) revert NotRaising();
         if (amount == 0) revert ZeroAmount();
-        if (!allowlist.isAllowed(msg.sender)) revert NotAllowlisted();
         if (minContribution > 0 && amount < minContribution) {
             revert BelowMinContribution(minContribution);
         }

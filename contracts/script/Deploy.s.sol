@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import { Script, console2 } from "forge-std/Script.sol";
 import { RRWAFactory } from "../src/RRWAFactory.sol";
 import { Marketplace } from "../src/Marketplace.sol";
-import { Allowlist } from "../src/Allowlist.sol";
 
 /**
- * @notice Deploys the RRWA core: Allowlist + Factory + Marketplace.
+ * @notice Deploys the RRWA core: Factory + Marketplace. Investing in a
+ *         raise is open to anyone — there is no allowlist/KYC gate.
  *
  *         The pooled-yield product has no contract — depositing means
  *         sending USDG directly to the treasury wallet, and withdrawals /
@@ -33,14 +33,12 @@ contract Deploy is Script {
 
         vm.startBroadcast(pk);
 
-        Allowlist allowlist = new Allowlist(owner);
-        RRWAFactory factory = new RRWAFactory(usdc, address(allowlist));
+        RRWAFactory factory = new RRWAFactory(usdc);
         Marketplace marketplace =
             new Marketplace(usdc, address(factory), treasury, owner);
 
         vm.stopBroadcast();
 
-        console2.log("Allowlist:  ", address(allowlist));
         console2.log("RRWAFactory:", address(factory));
         console2.log("Marketplace:", address(marketplace));
         console2.log("USDC:       ", usdc);

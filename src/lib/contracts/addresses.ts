@@ -11,11 +11,6 @@ export const FACTORY_ADDRESS = asAddress(
 export const MARKETPLACE_ADDRESS = asAddress(
   process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS
 );
-// Gates who may invest in a property raise. No KYC provider wired up yet —
-// the platform owner approves wallets manually for now.
-export const ALLOWLIST_ADDRESS = asAddress(
-  process.env.NEXT_PUBLIC_ALLOWLIST_ADDRESS
-);
 // USDG (Global Dollar) is the stablecoin on Robinhood Chain. Reads the new
 // NEXT_PUBLIC_USDG_ADDRESS, falling back to the legacy NEXT_PUBLIC_USDC_ADDRESS
 // so existing deployments keep working during the env rename.

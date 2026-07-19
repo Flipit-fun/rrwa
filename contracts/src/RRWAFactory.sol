@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import { Raise } from "./Raise.sol";
-import { Allowlist } from "./Allowlist.sol";
 
 /**
  * @title RRWAFactory
@@ -10,12 +9,11 @@ import { Allowlist } from "./Allowlist.sol";
  *         every raise created. The frontend reads this registry to render the
  *         live marketplace, then merges each raise with its off-chain metadata.
  *
- *         Every Raise it deploys shares the same Allowlist, so the platform
- *         owner manages one gate that covers every property raise.
+ *         Investing is open to anyone — there is no allowlist/KYC gate at
+ *         the contract level.
  */
 contract RRWAFactory {
     address public immutable usdc;
-    Allowlist public immutable allowlist;
 
     address[] public raises;
     mapping(address => bool) public isRaise;
@@ -37,9 +35,8 @@ contract RRWAFactory {
     error ZeroApy();
     error InvalidContributionBounds();
 
-    constructor(address usdc_, address allowlist_) {
+    constructor(address usdc_) {
         usdc = usdc_;
-        allowlist = Allowlist(allowlist_);
     }
 
     /**
@@ -72,7 +69,6 @@ contract RRWAFactory {
             apyBps,
             assetName,
             shareSymbol,
-            address(allowlist),
             minContribution,
             maxContribution
         );
