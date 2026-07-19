@@ -21,8 +21,12 @@ const prisma = new PrismaClient({ adapter });
 
 type SeedProperty = {
   name: string;
+  streetAddress: string;
   city: string;
   region: string;
+  bedrooms: number;
+  bathrooms: number;
+  areaSqft: number;
   description: string;
   assetType: "RESIDENTIAL" | "COMMERCIAL" | "WAREHOUSE" | "LAND" | "OTHER";
   targetUsdc: string; // USDG base units (6 decimals), as string
@@ -41,8 +45,12 @@ const DEMO_LISTER = "0x000000000000000000000000000000000000d3";
 const PROPERTIES: SeedProperty[] = [
   {
     name: "Palm Jumeirah Beachfront Villa",
+    streetAddress: "Frond M, Palm Jumeirah",
     city: "Dubai",
     region: "United Arab Emirates",
+    bedrooms: 5,
+    bathrooms: 6,
+    areaSqft: 7200,
     description:
       "A 5-bedroom beachfront villa on Palm Jumeirah with a private pool, direct beach access, and skyline views of the Dubai Marina. One of the most requested short-term rentals in the city, with strong year-round occupancy from tourism and business travel.",
     assetType: "RESIDENTIAL",
@@ -61,8 +69,12 @@ const PROPERTIES: SeedProperty[] = [
   },
   {
     name: "Trastevere Rooftop Loft",
+    streetAddress: "Via della Scala 12, Trastevere",
     city: "Rome",
     region: "Italy",
+    bedrooms: 2,
+    bathrooms: 2,
+    areaSqft: 1100,
     description:
       "A restored 2-bedroom loft in Rome's Trastevere district with a private rooftop terrace overlooking the city's terracotta skyline. Walking distance to the Tiber and the neighborhood's cafes and trattorias, with consistent demand from European city-break travelers.",
     assetType: "RESIDENTIAL",
@@ -81,8 +93,12 @@ const PROPERTIES: SeedProperty[] = [
   },
   {
     name: "South Beach Art Deco Condo",
+    streetAddress: "1500 Ocean Drive, South Beach",
     city: "Miami",
     region: "United States",
+    bedrooms: 2,
+    bathrooms: 2,
+    areaSqft: 1350,
     description:
       "A fully furnished 2-bedroom condo in the heart of Miami's South Beach Art Deco district, two blocks from Ocean Drive. Steady bookings from the city's year-round tourism and events calendar make it one of the stronger short-term yield markets in the US.",
     assetType: "RESIDENTIAL",
@@ -101,8 +117,12 @@ const PROPERTIES: SeedProperty[] = [
   },
   {
     name: "Uluwatu Cliffside Villa",
+    streetAddress: "Jl. Pantai Suluban, Uluwatu",
     city: "Bali",
     region: "Indonesia",
+    bedrooms: 4,
+    bathrooms: 5,
+    areaSqft: 4800,
     description:
       "A 4-bedroom cliffside villa near Uluwatu with an infinity pool overlooking the Indian Ocean. Bali's short-term rental market has grown steadily with the rise of remote work and long-stay travel, keeping occupancy high through most of the year.",
     assetType: "RESIDENTIAL",
@@ -121,8 +141,12 @@ const PROPERTIES: SeedProperty[] = [
   },
   {
     name: "Shibuya Compact City Apartment",
+    streetAddress: "2-1 Dogenzaka, Shibuya",
     city: "Tokyo",
     region: "Japan",
+    bedrooms: 1,
+    bathrooms: 1,
+    areaSqft: 420,
     description:
       "A minimalist 1-bedroom apartment steps from Shibuya Crossing, designed for the compact-living style Tokyo travelers expect. Dense foot traffic and a limited short-term rental supply in central wards support strong nightly rates.",
     assetType: "RESIDENTIAL",
@@ -141,8 +165,12 @@ const PROPERTIES: SeedProperty[] = [
   },
   {
     name: "Le Marais Haussmann Flat",
+    streetAddress: "18 Rue des Rosiers, Le Marais",
     city: "Paris",
     region: "France",
+    bedrooms: 2,
+    bathrooms: 1,
+    areaSqft: 980,
     description:
       "A classic Haussmann-style 2-bedroom flat in Le Marais, with original moldings, tall windows, and a balcony over a quiet cobblestone street. One of Paris's most tourist-dense arrondissements, with reliable demand across every season.",
     assetType: "RESIDENTIAL",
@@ -174,8 +202,12 @@ async function main() {
     await prisma.asset.create({
       data: {
         name: p.name,
+        streetAddress: p.streetAddress,
         city: p.city,
         region: p.region,
+        bedrooms: p.bedrooms,
+        bathrooms: p.bathrooms,
+        areaSqft: p.areaSqft,
         description: p.description,
         assetType: p.assetType,
         lister: p.lister,

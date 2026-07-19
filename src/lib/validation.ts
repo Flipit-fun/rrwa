@@ -24,11 +24,17 @@ const addressSchema = z
   .string()
   .regex(/^0x[a-fA-F0-9]{40}$/, "Must be a valid wallet address");
 
-/** Payload for creating asset metadata (before the on-chain raise exists). */
-export const createAssetSchema = z.object({
+/** Step 1: full property details. */
+export const propertyDetailsSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(120),
+  streetAddress: z.string().min(3, "Street address is required").max(200),
   city: z.string().min(1, "City is required").max(80),
-  region: z.string().min(1, "Region is required").max(80),
+  region: z.string().min(1, "Region / country is required").max(80),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  bedrooms: z.number().int().min(0).max(50).optional(),
+  bathrooms: z.number().int().min(0).max(50).optional(),
+  areaSqft: z.number().int().min(0).max(10_000_000).optional(),
   description: z.string().min(10, "Add a short description").max(4000),
   assetType: assetTypeEnum,
   lister: addressSchema,
@@ -45,7 +51,48 @@ export const createAssetSchema = z.object({
   coverImageUrl: z.string().url().optional().or(z.literal("")),
 });
 
-export type CreateAssetInput = z.infer<typeof createAssetSchema>;
+export type PropertyDetailsInput = z.infer<typeof propertyDetailsSchema>;
+
+// Kept as an alias — the listing action still calls this "createAsset".
+export const createAssetSchema = propertyDetailsSchema;
+export type CreateAssetInput = PropertyDetailsInput;
+
+/** Step 2: individual identity KYC. No automated verification provider is
+ *  wired up yet — a human on the RRWA team reviews submissions manually. */
+export const kycSchema = z.object({
+  assetId: z.string().min(1),
+  fullName: z.string().min(2, "Full name is required").max(160),
+  country: z.string().min(2, "Select a country").max(2),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+    .refine((v) => {
+      const age =
+        (Date.now() - new Date(v).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      return age >= 18;
+    }, "You must be 18 or older"),
+  idType: z.string().min(1, "Select an ID type"),
+  idNumber: z.string().min(3, "Enter your ID number").max(60),
+  phone: z.string().min(5, "Enter a phone number").max(30),
+  email: z.string().email("Enter a valid email"),
+  residentialAddress: z.string().min(5, "Enter your residential address").max(300),
+  fatherName: z.string().max(160).optional().or(z.literal("")),
+  motherName: z.string().max(160).optional().or(z.literal("")),
+  maritalStatus: z.string().max(30).optional().or(z.literal("")),
+  emergencyContactName: z.string().max(160).optional().or(z.literal("")),
+  emergencyContactPhone: z.string().max(30).optional().or(z.literal("")),
+});
+
+export type KycInput = z.infer<typeof kycSchema>;
+
+/** Step 3: social handles, then the application is submitted for review. */
+export const socialsSchema = z.object({
+  assetId: z.string().min(1),
+  xHandle: z.string().max(60).optional().or(z.literal("")),
+  telegramHandle: z.string().max(60).optional().or(z.literal("")),
+});
+
+export type SocialsInput = z.infer<typeof socialsSchema>;
 
 /** Payload for linking a raise address to an existing asset row. */
 export const linkRaiseSchema = z.object({

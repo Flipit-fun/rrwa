@@ -1,10 +1,8 @@
-import Link from "next/link";
-import Image from "next/image";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import GlitchWord from "@/components/GlitchWord";
+import PropertyCard from "@/components/PropertyCard";
 import { getProperties } from "@/app/actions/properties";
-import { formatUsd, formatApyBps } from "@/lib/format";
 
 export default async function PropertiesPage() {
   const properties = await getProperties();
@@ -38,39 +36,7 @@ export default async function PropertiesPage() {
           ) : (
             <div className="prop-grid">
               {properties.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/properties/${p.id}`}
-                  className="prop-card"
-                >
-                  {p.coverImageUrl && (
-                    <div className="prop-card-img">
-                      <Image
-                        src={p.coverImageUrl}
-                        alt={p.name}
-                        fill
-                        sizes="(max-width: 700px) 100vw, 33vw"
-                        style={{ objectFit: "cover" }}
-                      />
-                    </div>
-                  )}
-                  <div className="prop-card-body">
-                    <span className="eyebrow">
-                      {p.city}, {p.region}
-                    </span>
-                    <h3>{p.name}</h3>
-                    <div className="prop-card-stats">
-                      <div>
-                        <b>{formatApyBps(p.apyBps)}</b>
-                        <span>APY</span>
-                      </div>
-                      <div>
-                        <b>{formatUsd(BigInt(p.targetUsdc))}</b>
-                        <span>Value</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                <PropertyCard key={p.id} property={p} />
               ))}
             </div>
           )}

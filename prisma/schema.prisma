@@ -31,18 +31,24 @@ enum KybStatus {
   @@schema("rrwa")
 }
 
-/// One row per on-chain Raise. Linked by the raise contract address.
+/// One row per listing application. Starts as an off-chain application
+/// (PENDING review); the on-chain raise (raiseAddress) is only linked once
+/// RRWA has reviewed the KYC and the lister goes on to create it.
 model Asset {
   id            String     @id @default(cuid())
   // On-chain link. Null until the raise is created on-chain, then backfilled.
   raiseAddress  String?    @unique
   lister        String // wallet address of the lister
   name          String
+  streetAddress String? // full street address, kept private from public pages if needed
   city          String
-  region        String
+  region        String // state/province/country label
+  bedrooms      Int?
+  bathrooms     Int?
+  areaSqft      Int?
   description   String
   assetType     AssetType
-  // Cached listing terms (authoritative copy lives on-chain).
+  // Cached listing terms (authoritative copy lives on-chain once created).
   targetUsdc    String // USDC base units as string (bigint-safe)
   apyBps        Int
   kybStatus     KybStatus  @default(PENDING)
@@ -51,11 +57,49 @@ model Asset {
   longitude     Float?
   images        AssetImage[]
   kybDocs       KybDoc[]
+  kyc           Kyc?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
   @@index([lister])
   @@index([raiseAddress])
+  @@schema("rrwa")
+}
+
+/// Individual identity KYC captured during the listing application. No
+/// automated verification provider is wired up yet — a human on the RRWA
+/// team reviews this manually (see AGENTS discussion: "KYC comes later").
+model Kyc {
+  id            String   @id @default(cuid())
+  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId       String   @unique
+
+  // Identity
+  fullName      String
+  country       String // country of residence/citizenship
+  dateOfBirth   DateTime
+  idType        String // e.g. PASSPORT, DRIVING_LICENSE, NATIONAL_ID — options depend on `country`
+  idNumber      String
+
+  // Contact
+  phone         String
+  email         String
+  residentialAddress String
+
+  // Family / next of kin
+  fatherName          String?
+  motherName          String?
+  maritalStatus       String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  // Socials (collected on the final step of the application)
+  xHandle       String?
+  telegramHandle String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@schema("rrwa")
 }
 

@@ -6,8 +6,12 @@ export type AssetMetadata = {
   raiseAddress: string | null;
   lister: string;
   name: string;
+  streetAddress: string | null;
   city: string;
   region: string;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  areaSqft: number | null;
   description: string;
   assetType: string;
   targetUsdc: string;
@@ -61,8 +65,12 @@ type AssetRow = {
   raiseAddress: string | null;
   lister: string;
   name: string;
+  streetAddress: string | null;
   city: string;
   region: string;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  areaSqft: number | null;
   description: string;
   assetType: string;
   targetUsdc: string;
@@ -80,8 +88,12 @@ function serialize(r: AssetRow): AssetMetadata {
     raiseAddress: r.raiseAddress,
     lister: r.lister,
     name: r.name,
+    streetAddress: r.streetAddress,
     city: r.city,
     region: r.region,
+    bedrooms: r.bedrooms,
+    bathrooms: r.bathrooms,
+    areaSqft: r.areaSqft,
     description: r.description,
     assetType: r.assetType,
     targetUsdc: r.targetUsdc,

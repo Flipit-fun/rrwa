@@ -1,24 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import type { Address } from "viem";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import GlitchWord from "@/components/GlitchWord";
-import { ConfigNeeded } from "@/components/States";
-import { useNetworkGuard } from "@/hooks/useNetworkGuard";
-import { useCreateRaise } from "@/hooks/useCreateRaise";
-import { createAsset, linkRaiseAddress } from "@/app/actions/assets";
-import { areContractsConfigured } from "@/lib/contracts/addresses";
-import {
-  parseUsdg,
-  parseApyToBps,
-  formatUsd,
-  requiredRentDeposit,
-} from "@/lib/format";
+import { createAsset, submitKyc, submitSocialsAndFinish } from "@/app/actions/assets";
+import { parseUsdg, parseApyToBps } from "@/lib/format";
+import { COUNTRIES, idTypesForCountry } from "@/lib/countries";
 import type { z } from "zod";
 import { assetTypeEnum } from "@/lib/validation";
 
@@ -32,50 +22,49 @@ const TYPE_OPTIONS: { value: AssetType; label: string }[] = [
   { value: "OTHER", label: "Other real-world asset" },
 ];
 
-type Step = 0 | 1 | 2 | 3; // 0 form, 1 creating, 2 securing rent, 3 done
+type Step = 1 | 2 | 3 | 4; // 1 property, 2 KYC, 3 socials, 4 done
 
 export default function ListPage() {
-  const router = useRouter();
   const { address } = useAccount();
-  const guard = useNetworkGuard();
-  const { createRaise, depositRent } = useCreateRaise();
 
-  const [step, setStep] = useState<Step>(0);
+  const [step, setStep] = useState<Step>(1);
   const [error, setError] = useState<string | null>(null);
-  const [raiseAddr, setRaiseAddr] = useState<Address | null>(null);
+  const [assetId, setAssetId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [form, setForm] = useState({
+  const [property, setProperty] = useState({
     name: "",
+    streetAddress: "",
     city: "",
     region: "",
-    description: "",
+    bedrooms: "",
+    bathrooms: "",
+    areaSqft: "",
     assetType: "RESIDENTIAL" as AssetType,
     target: "",
     apy: "",
+    description: "",
   });
 
-  function symbolFrom(name: string): string {
-    const base = name
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, "")
-      .slice(0, 6);
-    return `RRWA${base ? "-" + base : ""}`.slice(0, 11);
-  }
+  const [kyc, setKyc] = useState({
+    fullName: "",
+    country: "US",
+    idType: "PASSPORT",
+    dateOfBirth: "",
+    idNumber: "",
+    phone: "",
+    email: "",
+    residentialAddress: "",
+    fatherName: "",
+    motherName: "",
+    maritalStatus: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+  });
 
-  const rentPreview =
-    form.target && form.apy
-      ? (() => {
-          try {
-            return formatUsd(
-              requiredRentDeposit(parseUsdg(form.target), parseApyToBps(form.apy))
-            );
-          } catch {
-            return null;
-          }
-        })()
-      : null;
+  const [socials, setSocials] = useState({ xHandle: "", telegramHandle: "" });
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmitProperty(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!address) return;
@@ -83,8 +72,8 @@ export default function ListPage() {
     let target: bigint;
     let apyBps: number;
     try {
-      target = parseUsdg(form.target);
-      apyBps = parseApyToBps(form.apy);
+      target = parseUsdg(property.target);
+      apyBps = parseApyToBps(property.apy);
     } catch {
       setError("Check the target and APY values.");
       return;
@@ -98,68 +87,65 @@ export default function ListPage() {
       return;
     }
 
-    // 1) save metadata off-chain
+    setSubmitting(true);
     const created = await createAsset({
-      name: form.name,
-      city: form.city,
-      region: form.region,
-      description: form.description,
-      assetType: form.assetType,
+      name: property.name,
+      streetAddress: property.streetAddress,
+      city: property.city,
+      region: property.region,
+      bedrooms: property.bedrooms ? Number(property.bedrooms) : undefined,
+      bathrooms: property.bathrooms ? Number(property.bathrooms) : undefined,
+      areaSqft: property.areaSqft ? Number(property.areaSqft) : undefined,
+      description: property.description,
+      assetType: property.assetType,
       lister: address,
       targetUsdc: target.toString(),
       apyBps,
       coverImageUrl: "",
     });
+    setSubmitting(false);
+
     if (!created.ok) {
       setError(created.error);
       return;
     }
-
-    // 2) create raise on chain
-    setStep(1);
-    const addr = await createRaise({
-      target,
-      apyBps,
-      assetName: form.name,
-      shareSymbol: symbolFrom(form.name),
-    });
-    if (!addr) {
-      setStep(0);
-      setError("The raise wasn't created on chain. Nothing was charged.");
-      return;
-    }
-    setRaiseAddr(addr);
-
-    // link the on-chain address back to the metadata row
-    await linkRaiseAddress({ assetId: created.data.id, raiseAddress: addr });
-
-    // 3) deposit rent
+    setAssetId(created.data.id);
     setStep(2);
-    const rentOk = await depositRent(addr);
-    if (!rentOk) {
-      setError(
-        "Rent wasn't secured, so the asset isn't live yet. You can retry securing rent from the asset page."
-      );
-      // still move forward — the raise exists
-      setStep(3);
+  }
+
+  async function onSubmitKyc(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!assetId) return;
+
+    setSubmitting(true);
+    const result = await submitKyc({ assetId, ...kyc });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
     setStep(3);
   }
 
-  if (!areContractsConfigured()) {
-    return (
-      <>
-        <SiteHeader />
-        <main>
-          <div className="wrap page">
-            <ConfigNeeded what="Listing" />
-          </div>
-        </main>
-        <SiteFooter />
-      </>
-    );
+  async function onSubmitSocials(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!assetId) return;
+
+    setSubmitting(true);
+    const result = await submitSocialsAndFinish({ assetId, ...socials });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setStep(4);
   }
+
+  const idTypeOptions = idTypesForCountry(kyc.country);
 
   return (
     <>
@@ -172,96 +158,85 @@ export default function ListPage() {
               List your <GlitchWord>asset</GlitchWord>.
             </h1>
             <p>
-              Set a funding target and a fixed APY. Three years of rent is
-              secured upfront through RRWA — that&apos;s what backs every payout
-              to your funders.
+              Tell us about the property, verify your identity, and we&apos;ll
+              be in touch to get it live on RRWA. KYC is reviewed manually for
+              now — an automated provider is coming later.
             </p>
           </div>
 
-          {step > 0 && (
+          {step < 4 && (
             <div className="stepper">
-              <div
-                className={`stepper-item ${step === 1 ? "active" : step > 1 ? "done" : ""}`}
-              >
+              <div className={`stepper-item ${step === 1 ? "active" : step > 1 ? "done" : ""}`}>
                 <span className="stepper-num">i.</span>
                 <div>
-                  <div className="stepper-label">Create raise</div>
-                  <div className="stepper-sub">Deploy the raise on chain</div>
+                  <div className="stepper-label">Property details</div>
+                  <div className="stepper-sub">Address, photos, terms</div>
                 </div>
               </div>
-              <div
-                className={`stepper-item ${step === 2 ? "active" : step > 2 ? "done" : ""}`}
-              >
+              <div className={`stepper-item ${step === 2 ? "active" : step > 2 ? "done" : ""}`}>
                 <span className="stepper-num">ii.</span>
                 <div>
-                  <div className="stepper-label">Secure rent</div>
-                  <div className="stepper-sub">Deposit 3 years upfront</div>
+                  <div className="stepper-label">Identity (KYC)</div>
+                  <div className="stepper-sub">Who you are</div>
                 </div>
               </div>
               <div className={`stepper-item ${step === 3 ? "active" : ""}`}>
                 <span className="stepper-num">iii.</span>
                 <div>
-                  <div className="stepper-label">Live</div>
-                  <div className="stepper-sub">Open for funding</div>
+                  <div className="stepper-label">Socials</div>
+                  <div className="stepper-sub">X &amp; Telegram, then submit</div>
                 </div>
               </div>
             </div>
           )}
 
-          {step === 3 ? (
+          {step === 4 ? (
             <div className="state-box">
-              <h3>Your asset is listed</h3>
+              <h3>Application submitted</h3>
               <p>
-                {raiseAddr
-                  ? "Your raise is on chain and ready for funders."
-                  : "Your raise was created."}
+                We&apos;ll review your property details and identity
+                verification, then reach out about next steps. Thanks for
+                listing with RRWA.
               </p>
-              {raiseAddr && (
-                <button
-                  className="btn"
-                  onClick={() => router.push(`/asset/${raiseAddr}`)}
-                >
-                  View your asset <span className="arr">→</span>
-                </button>
-              )}
             </div>
-          ) : !guard.isConnected ? (
+          ) : !address ? (
             <div className="state-box">
               <h3>Connect to list</h3>
-              <p>Connect your wallet to create a raise and secure rent.</p>
+              <p>Connect your wallet to start a listing application.</p>
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <ConnectButton />
               </div>
             </div>
-          ) : guard.wrongNetwork ? (
-            <div className="banner warn">
-              <span>RRWA runs on Robinhood Chain. Switch networks to list.</span>
-              <button
-                className="btn"
-                onClick={guard.switchToChain}
-                disabled={guard.switching}
-              >
-                {guard.switching ? "Switching..." : "Switch network"}
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={onSubmit} style={{ maxWidth: 640 }}>
-              <div className="note">
-                Three years of rent is secured upfront through RRWA. This is
-                what guarantees your funders&apos; APY — we hold it, and we
-                handle every distribution for you.
-              </div>
-
+          ) : step === 1 ? (
+            <form onSubmit={onSubmitProperty} style={{ maxWidth: 640 }}>
               <div className="field">
-                <label htmlFor="f-name">Asset name</label>
+                <label htmlFor="f-name">Property name</label>
                 <input
                   id="f-name"
                   type="text"
                   placeholder="2BR Apartment, Los Angeles"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  value={property.name}
+                  onChange={(e) => setProperty({ ...property, name: e.target.value })}
                   required
                 />
+              </div>
+
+              <div className="field">
+                <label htmlFor="f-street">Street address</label>
+                <input
+                  id="f-street"
+                  type="text"
+                  placeholder="123 Main St, Apt 4B"
+                  value={property.streetAddress}
+                  onChange={(e) =>
+                    setProperty({ ...property, streetAddress: e.target.value })
+                  }
+                  required
+                />
+                <div className="hint">
+                  Used for our internal review — not shown publicly on the
+                  listing page.
+                </div>
               </div>
 
               <div className="field-row">
@@ -271,24 +246,59 @@ export default function ListPage() {
                     id="f-city"
                     type="text"
                     placeholder="Los Angeles"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    value={property.city}
+                    onChange={(e) => setProperty({ ...property, city: e.target.value })}
                     required
                   />
                 </div>
                 <div className="field">
-                  <label htmlFor="f-region">Region / state</label>
+                  <label htmlFor="f-region">Region / country</label>
                   <input
                     id="f-region"
                     type="text"
-                    placeholder="California"
-                    value={form.region}
-                    onChange={(e) =>
-                      setForm({ ...form, region: e.target.value })
-                    }
+                    placeholder="California, USA"
+                    value={property.region}
+                    onChange={(e) => setProperty({ ...property, region: e.target.value })}
                     required
                   />
                 </div>
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="f-bhk">Bedrooms</label>
+                  <input
+                    id="f-bhk"
+                    type="number"
+                    min={0}
+                    placeholder="2"
+                    value={property.bedrooms}
+                    onChange={(e) => setProperty({ ...property, bedrooms: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="f-bath">Bathrooms</label>
+                  <input
+                    id="f-bath"
+                    type="number"
+                    min={0}
+                    placeholder="2"
+                    value={property.bathrooms}
+                    onChange={(e) => setProperty({ ...property, bathrooms: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="field">
+                <label htmlFor="f-area">Area (sq ft)</label>
+                <input
+                  id="f-area"
+                  type="number"
+                  min={0}
+                  placeholder="1200"
+                  value={property.areaSqft}
+                  onChange={(e) => setProperty({ ...property, areaSqft: e.target.value })}
+                />
               </div>
 
               <div className="field-row">
@@ -299,15 +309,10 @@ export default function ListPage() {
                     type="text"
                     inputMode="decimal"
                     placeholder="10,000"
-                    value={form.target}
-                    onChange={(e) =>
-                      setForm({ ...form, target: e.target.value })
-                    }
+                    value={property.target}
+                    onChange={(e) => setProperty({ ...property, target: e.target.value })}
                     required
                   />
-                  <div className="hint">
-                    You withdraw the full amount once the raise is complete.
-                  </div>
                 </div>
                 <div className="field">
                   <label htmlFor="f-apy">APY offered (% p.a.)</label>
@@ -316,13 +321,10 @@ export default function ListPage() {
                     type="text"
                     inputMode="decimal"
                     placeholder="9.5"
-                    value={form.apy}
-                    onChange={(e) => setForm({ ...form, apy: e.target.value })}
+                    value={property.apy}
+                    onChange={(e) => setProperty({ ...property, apy: e.target.value })}
                     required
                   />
-                  <div className="hint">
-                    Paid to funders from your secured rent.
-                  </div>
                 </div>
               </div>
 
@@ -330,12 +332,9 @@ export default function ListPage() {
                 <label htmlFor="f-type">Asset type</label>
                 <select
                   id="f-type"
-                  value={form.assetType}
+                  value={property.assetType}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      assetType: e.target.value as AssetType,
-                    })
+                    setProperty({ ...property, assetType: e.target.value as AssetType })
                   }
                 >
                   {TYPE_OPTIONS.map((o) => (
@@ -351,21 +350,14 @@ export default function ListPage() {
                 <input
                   id="f-desc"
                   type="text"
-                  placeholder="A short description of the asset"
-                  value={form.description}
+                  placeholder="A brief description of the property"
+                  value={property.description}
                   onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
+                    setProperty({ ...property, description: e.target.value })
                   }
                   required
                 />
               </div>
-
-              {rentPreview && (
-                <div className="note" style={{ borderLeftColor: "var(--blue-deep)" }}>
-                  Rent to secure upfront: <b>{rentPreview}</b> (target × APY × 3
-                  years). You&apos;ll approve and deposit this in step two.
-                </div>
-              )}
 
               {error && (
                 <div className="banner warn" style={{ marginTop: 8 }}>
@@ -373,13 +365,233 @@ export default function ListPage() {
                 </div>
               )}
 
-              <button
-                className="btn"
-                style={{ marginTop: 8 }}
-                type="submit"
-                disabled={step !== 0}
-              >
-                Submit listing <span className="arr">→</span>
+              <button className="btn" style={{ marginTop: 8 }} type="submit" disabled={submitting}>
+                {submitting ? "Saving..." : "Next: verify identity"} <span className="arr">→</span>
+              </button>
+            </form>
+          ) : step === 2 ? (
+            <form onSubmit={onSubmitKyc} style={{ maxWidth: 640 }}>
+              <div className="note">
+                We verify the identity of every lister before a property goes
+                live. This is reviewed by our team — no automated ID checker
+                is wired up yet.
+              </div>
+
+              <div className="field">
+                <label htmlFor="k-name">Full legal name</label>
+                <input
+                  id="k-name"
+                  type="text"
+                  value={kyc.fullName}
+                  onChange={(e) => setKyc({ ...kyc, fullName: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="k-country">Country</label>
+                  <select
+                    id="k-country"
+                    value={kyc.country}
+                    onChange={(e) =>
+                      setKyc({
+                        ...kyc,
+                        country: e.target.value,
+                        idType: idTypesForCountry(e.target.value)[0]?.value ?? "PASSPORT",
+                      })
+                    }
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="k-dob">Date of birth</label>
+                  <input
+                    id="k-dob"
+                    type="date"
+                    value={kyc.dateOfBirth}
+                    onChange={(e) => setKyc({ ...kyc, dateOfBirth: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="k-idtype">ID type</label>
+                  <select
+                    id="k-idtype"
+                    value={kyc.idType}
+                    onChange={(e) => setKyc({ ...kyc, idType: e.target.value })}
+                  >
+                    {idTypeOptions.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="k-idnum">ID number</label>
+                  <input
+                    id="k-idnum"
+                    type="text"
+                    value={kyc.idNumber}
+                    onChange={(e) => setKyc({ ...kyc, idNumber: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="k-phone">Phone number</label>
+                  <input
+                    id="k-phone"
+                    type="tel"
+                    value={kyc.phone}
+                    onChange={(e) => setKyc({ ...kyc, phone: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="k-email">Email</label>
+                  <input
+                    id="k-email"
+                    type="email"
+                    value={kyc.email}
+                    onChange={(e) => setKyc({ ...kyc, email: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="field">
+                <label htmlFor="k-addr">Residential address</label>
+                <input
+                  id="k-addr"
+                  type="text"
+                  value={kyc.residentialAddress}
+                  onChange={(e) => setKyc({ ...kyc, residentialAddress: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="k-father">Father&apos;s name (optional)</label>
+                  <input
+                    id="k-father"
+                    type="text"
+                    value={kyc.fatherName}
+                    onChange={(e) => setKyc({ ...kyc, fatherName: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="k-mother">Mother&apos;s name (optional)</label>
+                  <input
+                    id="k-mother"
+                    type="text"
+                    value={kyc.motherName}
+                    onChange={(e) => setKyc({ ...kyc, motherName: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="field">
+                <label htmlFor="k-marital">Marital status (optional)</label>
+                <select
+                  id="k-marital"
+                  value={kyc.maritalStatus}
+                  onChange={(e) => setKyc({ ...kyc, maritalStatus: e.target.value })}
+                >
+                  <option value="">Prefer not to say</option>
+                  <option value="SINGLE">Single</option>
+                  <option value="MARRIED">Married</option>
+                  <option value="DIVORCED">Divorced</option>
+                  <option value="WIDOWED">Widowed</option>
+                </select>
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="k-ec-name">Emergency contact name (optional)</label>
+                  <input
+                    id="k-ec-name"
+                    type="text"
+                    value={kyc.emergencyContactName}
+                    onChange={(e) =>
+                      setKyc({ ...kyc, emergencyContactName: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="k-ec-phone">Emergency contact phone (optional)</label>
+                  <input
+                    id="k-ec-phone"
+                    type="tel"
+                    value={kyc.emergencyContactPhone}
+                    onChange={(e) =>
+                      setKyc({ ...kyc, emergencyContactPhone: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="banner warn" style={{ marginTop: 8 }}>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button className="btn" style={{ marginTop: 8 }} type="submit" disabled={submitting}>
+                {submitting ? "Saving..." : "Next: socials"} <span className="arr">→</span>
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={onSubmitSocials} style={{ maxWidth: 640 }}>
+              <div className="note">
+                Optional, but it helps us verify you faster and reach you
+                about your application.
+              </div>
+
+              <div className="field">
+                <label htmlFor="s-x">X (Twitter) handle</label>
+                <input
+                  id="s-x"
+                  type="text"
+                  placeholder="@yourhandle"
+                  value={socials.xHandle}
+                  onChange={(e) => setSocials({ ...socials, xHandle: e.target.value })}
+                />
+              </div>
+
+              <div className="field">
+                <label htmlFor="s-tg">Telegram handle</label>
+                <input
+                  id="s-tg"
+                  type="text"
+                  placeholder="@yourhandle"
+                  value={socials.telegramHandle}
+                  onChange={(e) =>
+                    setSocials({ ...socials, telegramHandle: e.target.value })
+                  }
+                />
+              </div>
+
+              {error && (
+                <div className="banner warn" style={{ marginTop: 8 }}>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button className="btn" style={{ marginTop: 8 }} type="submit" disabled={submitting}>
+                {submitting ? "Submitting..." : "Submit application"} <span className="arr">→</span>
               </button>
             </form>
           )}
