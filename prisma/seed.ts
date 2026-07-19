@@ -1,23 +1,30 @@
 /**
  * Seeds the RRWA infrastructure/RWA fund listings shown on the properties
  * page — funds backing real-world sectors (energy, logistics, telecom,
- * hospitality, medical leasing, aquaculture, etc.), each with a TVL, fixed
- * APY, and utilization capacity rather than a single residential property's
- * bedrooms/bathrooms. Images are free-to-use Unsplash stock photography
- * matched to each sector, not photos of any specific real facility.
+ * hospitality, medical leasing, aquaculture, etc.), each with a real USDG
+ * funding target and per-wallet min/max investment bounds rather than an
+ * inflated "TVL in millions" figure. Once a listing has an on-chain Raise
+ * linked (raiseAddress), the live raised/target from the contract is what's
+ * shown — these seed values are just the pre-launch preview terms. Images
+ * are free-to-use Unsplash stock photography matched to each sector, not
+ * photos of any specific real facility.
  *
  * Run with: npm run db:seed
  * Requires DATABASE_URL / DIRECT_URL pointed at your Supabase Postgres
- * instance (Project Settings -> Database -> Connection string). This was
- * written and type-checked but not executed against a live DB in this
- * environment, since no Supabase credentials were available here.
+ * instance (Project Settings -> Database -> Connection string).
  */
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const connectionString =
   process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? "";
-const adapter = new PrismaPg({ connectionString });
+// Supabase requires SSL; see the matching note in src/lib/db.ts.
+const needsSsl = /supabase\.(co|com)/.test(connectionString);
+const adapter = new PrismaPg({
+  connectionString,
+  ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+});
 const prisma = new PrismaClient({ adapter });
 
 type SeedFund = {
@@ -27,7 +34,9 @@ type SeedFund = {
   region: string;
   description: string;
   assetType: "INFRASTRUCTURE";
-  tvlMillions: number;
+  targetUsd: number; // real USD funding target for this listing
+  minContributionUsd: number; // per-wallet minimum investment
+  maxContributionUsd: number; // per-wallet maximum investment
   apyBps: number;
   capacityPct: number;
   operatingStatus: "ACTIVE" | "PAUSED" | "CLOSED";
@@ -42,9 +51,9 @@ type SeedFund = {
 // operator wallet before going live.
 const DEMO_LISTER = "0x000000000000000000000000000000000000d3";
 
-/** TVL in $ millions -> USDG base units (6 decimals) as a string. */
-function tvlToUsdgBaseUnits(millions: number): string {
-  return (BigInt(Math.round(millions * 1_000_000)) * 1_000_000n).toString();
+/** Whole USD -> USDG base units (6 decimals) as a string. */
+function usdToUsdgBaseUnits(usd: number): string {
+  return (BigInt(Math.round(usd)) * 1_000_000n).toString();
 }
 
 const FUNDS: SeedFund[] = [
@@ -56,7 +65,9 @@ const FUNDS: SeedFund[] = [
     description:
       "A portfolio of grid-scale battery storage and transmission infrastructure supporting renewable energy integration across Texas. Revenue comes from long-term capacity contracts with regional utilities.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 425,
+    targetUsd: 25_000,
+    minContributionUsd: 500,
+    maxContributionUsd: 5_000,
     apyBps: 1180,
     capacityPct: 74,
     operatingStatus: "ACTIVE",
@@ -78,7 +89,9 @@ const FUNDS: SeedFund[] = [
     description:
       "A network of climate-controlled industrial storage facilities serving regional distribution and e-commerce fulfillment tenants under multi-year leases.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 310,
+    targetUsd: 18_000,
+    minContributionUsd: 500,
+    maxContributionUsd: 3_000,
     apyBps: 960,
     capacityPct: 42,
     operatingStatus: "ACTIVE",
@@ -100,7 +113,9 @@ const FUNDS: SeedFund[] = [
     description:
       "Regional fiber-optic backbone infrastructure leased to telecom carriers and enterprise customers, with revenue backed by long-term dark fiber and lit-service contracts.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 590,
+    targetUsd: 40_000,
+    minContributionUsd: 1_000,
+    maxContributionUsd: 5_000,
     apyBps: 1090,
     capacityPct: 81,
     operatingStatus: "ACTIVE",
@@ -122,7 +137,9 @@ const FUNDS: SeedFund[] = [
     description:
       "A portfolio of branded short-term rental and boutique hotel properties in high-demand European city centers, generating yield from nightly and extended-stay bookings.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 810,
+    targetUsd: 35_000,
+    minContributionUsd: 500,
+    maxContributionUsd: 5_000,
     apyBps: 870,
     capacityPct: 63,
     operatingStatus: "ACTIVE",
@@ -144,7 +161,9 @@ const FUNDS: SeedFund[] = [
     description:
       "Finances and leases diagnostic and surgical equipment to hospital networks and outpatient clinics, earning yield from multi-year equipment lease payments.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 460,
+    targetUsd: 22_000,
+    minContributionUsd: 500,
+    maxContributionUsd: 5_000,
     apyBps: 1210,
     capacityPct: 57,
     operatingStatus: "ACTIVE",
@@ -166,7 +185,9 @@ const FUNDS: SeedFund[] = [
     description:
       "Owns and operates utility-scale solar generation assets under long-term power purchase agreements with regional grid operators.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 680,
+    targetUsd: 30_000,
+    minContributionUsd: 1_000,
+    maxContributionUsd: 5_000,
     apyBps: 1040,
     capacityPct: 69,
     operatingStatus: "ACTIVE",
@@ -188,7 +209,9 @@ const FUNDS: SeedFund[] = [
     description:
       "Finances freight containers and cross-border trucking fleets serving one of Europe's busiest port and logistics corridors, earning yield from freight lease and financing contracts.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 395,
+    targetUsd: 20_000,
+    minContributionUsd: 500,
+    maxContributionUsd: 3_000,
     apyBps: 1150,
     capacityPct: 51,
     operatingStatus: "ACTIVE",
@@ -210,7 +233,9 @@ const FUNDS: SeedFund[] = [
     description:
       "Operates offshore salmon and shellfish aquaculture facilities supplying seafood exporters, with yield generated from harvest contracts and export agreements.",
     assetType: "INFRASTRUCTURE",
-    tvlMillions: 275,
+    targetUsd: 15_000,
+    minContributionUsd: 500,
+    maxContributionUsd: 3_000,
     apyBps: 1320,
     capacityPct: 36,
     operatingStatus: "ACTIVE",
@@ -232,7 +257,17 @@ async function main() {
       where: { name: f.name, city: f.city },
     });
     if (existing) {
-      console.log(`Skipping "${f.name}" — already seeded.`);
+      // Backfill min/max preview + real (non-inflated) target on existing
+      // rows from an earlier seed run, without touching linked raises.
+      await prisma.asset.update({
+        where: { id: existing.id },
+        data: {
+          targetUsdc: usdToUsdgBaseUnits(f.targetUsd),
+          minContributionUsdc: usdToUsdgBaseUnits(f.minContributionUsd),
+          maxContributionUsdc: usdToUsdgBaseUnits(f.maxContributionUsd),
+        },
+      });
+      console.log(`Updated "${f.name}" — already seeded, refreshed terms.`);
       continue;
     }
 
@@ -245,8 +280,9 @@ async function main() {
         description: f.description,
         assetType: f.assetType,
         lister: f.lister,
-        targetUsdc: tvlToUsdgBaseUnits(f.tvlMillions),
-        tvlMillions: f.tvlMillions,
+        targetUsdc: usdToUsdgBaseUnits(f.targetUsd),
+        minContributionUsdc: usdToUsdgBaseUnits(f.minContributionUsd),
+        maxContributionUsdc: usdToUsdgBaseUnits(f.maxContributionUsd),
         apyBps: f.apyBps,
         capacityPct: f.capacityPct,
         operatingStatus: f.operatingStatus,

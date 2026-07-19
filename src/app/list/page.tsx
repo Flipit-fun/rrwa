@@ -43,6 +43,8 @@ export default function ListPage() {
     assetType: "RESIDENTIAL" as AssetType,
     target: "",
     apy: "",
+    minInvestment: "",
+    maxInvestment: "",
     description: "",
   });
 
@@ -87,6 +89,20 @@ export default function ListPage() {
       return;
     }
 
+    let minContributionUsdc: string | undefined;
+    let maxContributionUsdc: string | undefined;
+    try {
+      minContributionUsdc = property.minInvestment
+        ? parseUsdg(property.minInvestment).toString()
+        : undefined;
+      maxContributionUsdc = property.maxInvestment
+        ? parseUsdg(property.maxInvestment).toString()
+        : undefined;
+    } catch {
+      setError("Check the minimum and maximum investment values.");
+      return;
+    }
+
     setSubmitting(true);
     const created = await createAsset({
       name: property.name,
@@ -96,6 +112,8 @@ export default function ListPage() {
       bedrooms: property.bedrooms ? Number(property.bedrooms) : undefined,
       bathrooms: property.bathrooms ? Number(property.bathrooms) : undefined,
       areaSqft: property.areaSqft ? Number(property.areaSqft) : undefined,
+      minContributionUsdc,
+      maxContributionUsdc,
       description: property.description,
       assetType: property.assetType,
       lister: address,
@@ -325,6 +343,37 @@ export default function ListPage() {
                     onChange={(e) => setProperty({ ...property, apy: e.target.value })}
                     required
                   />
+                </div>
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="f-min">Minimum investment (USD, optional)</label>
+                  <input
+                    id="f-min"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="500"
+                    value={property.minInvestment}
+                    onChange={(e) =>
+                      setProperty({ ...property, minInvestment: e.target.value })
+                    }
+                  />
+                  <div className="hint">Smallest amount a wallet can invest.</div>
+                </div>
+                <div className="field">
+                  <label htmlFor="f-max">Maximum per wallet (USD, optional)</label>
+                  <input
+                    id="f-max"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="5,000"
+                    value={property.maxInvestment}
+                    onChange={(e) =>
+                      setProperty({ ...property, maxInvestment: e.target.value })
+                    }
+                  />
+                  <div className="hint">Caps how much one wallet can put in.</div>
                 </div>
               </div>
 

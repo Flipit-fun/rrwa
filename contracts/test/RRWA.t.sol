@@ -45,7 +45,18 @@ contract RRWATest is Test {
 
     function _createRaise() internal returns (Raise raise) {
         vm.prank(lister);
-        address addr = factory.createRaise(TARGET, APY_BPS, "2BR Apartment Los Angeles", "RRWA-LAX");
+        address addr =
+            factory.createRaise(TARGET, APY_BPS, "2BR Apartment Los Angeles", "RRWA-LAX", 0, 0);
+        raise = Raise(addr);
+    }
+
+    function _createRaiseWithBounds(uint256 minC, uint256 maxC)
+        internal
+        returns (Raise raise)
+    {
+        vm.prank(lister);
+        address addr =
+            factory.createRaise(TARGET, APY_BPS, "2BR Apartment Los Angeles", "RRWA-LAX", minC, maxC);
         raise = Raise(addr);
     }
 
@@ -322,7 +333,53 @@ contract RRWATest is Test {
     function test_ZeroTargetRejected() public {
         vm.prank(lister);
         vm.expectRevert(RRWAFactory.ZeroTarget.selector);
-        factory.createRaise(0, APY_BPS, "X", "X");
+        factory.createRaise(0, APY_BPS, "X", "X", 0, 0);
+    }
+
+    // ---- per-wallet contribution bounds ----
+
+    function test_MinContributionEnforced() public {
+        Raise raise = _createRaiseWithBounds(500e6, 5_000e6);
+        _depositRent(raise);
+
+        vm.startPrank(alice);
+        usdc.approve(address(raise), 500e6);
+        vm.expectRevert(abi.encodeWithSelector(Raise.BelowMinContribution.selector, 500e6));
+        raise.fund(100e6);
+        vm.stopPrank();
+
+        // exactly the minimum succeeds
+        _fund(raise, alice, 500e6);
+        assertEq(raise.raised(), 500e6);
+    }
+
+    function test_MaxContributionEnforcedAcrossMultipleFunds() public {
+        Raise raise = _createRaiseWithBounds(500e6, 5_000e6);
+        _depositRent(raise);
+
+        _fund(raise, alice, 3_000e6);
+        assertEq(raise.contributed(alice), 3_000e6);
+
+        // a second contribution that would push alice's total past the cap reverts
+        vm.startPrank(alice);
+        usdc.approve(address(raise), 3_000e6);
+        vm.expectRevert(abi.encodeWithSelector(Raise.ExceedsMaxContribution.selector, 5_000e6));
+        raise.fund(3_000e6);
+        vm.stopPrank();
+
+        // topping up to exactly the cap succeeds
+        _fund(raise, alice, 2_000e6);
+        assertEq(raise.contributed(alice), 5_000e6);
+    }
+
+    function test_ZeroBoundsMeanNoCap() public {
+        Raise raise = _createRaiseWithBounds(0, 0);
+        _depositRent(raise);
+
+        // a tiny contribution and a large one both succeed with no bounds set
+        _fund(raise, alice, 1e6);
+        _fund(raise, alice, 9_999e6);
+        assertEq(raise.contributed(alice), 10_000e6);
     }
 
     // ---- allowlist gating ----

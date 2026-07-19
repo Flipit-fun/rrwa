@@ -34,6 +34,8 @@ export function useCreateRaise() {
       apyBps: number;
       assetName: string;
       shareSymbol: string;
+      minContribution?: bigint;
+      maxContribution?: bigint;
     }): Promise<Address | null> => {
       if (!FACTORY_ADDRESS) return null;
       const toastId = push({
@@ -51,6 +53,8 @@ export function useCreateRaise() {
             BigInt(params.apyBps),
             params.assetName,
             params.shareSymbol,
+            params.minContribution ?? 0n,
+            params.maxContribution ?? 0n,
           ],
         });
         update(toastId, {

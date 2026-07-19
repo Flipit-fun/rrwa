@@ -1,12 +1,13 @@
-import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import type { Address } from "viem";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import GlitchWord from "@/components/GlitchWord";
-import PropertyMap from "@/components/PropertyMap";
+import PropertyInvestPanel from "@/components/PropertyInvestPanel";
+import PropertyStatsChartClient from "@/components/PropertyStatsChartClient";
 import { getProperties } from "@/app/actions/properties";
-import { formatUsd, formatApyBps, formatTvlMillions } from "@/lib/format";
+import { formatApyBps } from "@/lib/format";
 
 export default async function PropertyDetailPage({
   params,
@@ -31,7 +32,9 @@ export default async function PropertyDetailPage({
           <h1 style={{ marginBottom: 8 }}>
             <GlitchWord>{property.name}</GlitchWord>
           </h1>
-          <span className={`prop-status-inline prop-status-${property.operatingStatus.toLowerCase()}`}>
+          <span
+            className={`prop-status-inline prop-status-${property.operatingStatus.toLowerCase()}`}
+          >
             {property.operatingStatus === "ACTIVE"
               ? "Active"
               : property.operatingStatus === "PAUSED"
@@ -60,14 +63,6 @@ export default async function PropertyDetailPage({
             <div>
               <div className="stat-row">
                 <div className="stat">
-                  <b>
-                    {property.tvlMillions != null
-                      ? formatTvlMillions(property.tvlMillions)
-                      : formatUsd(BigInt(property.targetUsdc))}
-                  </b>
-                  <span>TVL</span>
-                </div>
-                <div className="stat">
                   <b>{formatApyBps(property.apyBps)}</b>
                   <span>APY</span>
                 </div>
@@ -77,6 +72,10 @@ export default async function PropertyDetailPage({
                     <span>Capacity</span>
                   </div>
                 )}
+                <div className="stat">
+                  <b>{property.assetType}</b>
+                  <span>Type</span>
+                </div>
               </div>
 
               <p
@@ -91,40 +90,25 @@ export default async function PropertyDetailPage({
                 {property.description}
               </p>
 
-              {property.raiseAddress && (
-                <Link
-                  href={`/asset/${property.raiseAddress}`}
-                  className="btn"
-                  style={{ marginTop: 24 }}
+              <div style={{ marginTop: 32 }}>
+                <h3
+                  style={{
+                    fontFamily: "var(--serif)",
+                    fontWeight: 400,
+                    fontSize: 22,
+                    marginBottom: 14,
+                  }}
                 >
-                  View raise on the marketplace <span className="arr">→</span>
-                </Link>
-              )}
+                  Funding
+                </h3>
+                <PropertyStatsChartClient
+                  raiseAddress={property.raiseAddress as Address | null}
+                  targetUsdc={property.targetUsdc}
+                />
+              </div>
             </div>
 
-            <div className="card">
-              <h3
-                style={{
-                  fontFamily: "var(--serif)",
-                  fontWeight: 400,
-                  fontSize: 22,
-                  marginBottom: 14,
-                }}
-              >
-                Location
-              </h3>
-              {property.latitude != null && property.longitude != null ? (
-                <PropertyMap
-                  latitude={property.latitude}
-                  longitude={property.longitude}
-                  label={property.name}
-                />
-              ) : (
-                <p style={{ color: "var(--faint)", fontSize: 14 }}>
-                  Location pending.
-                </p>
-              )}
-            </div>
+            <PropertyInvestPanel property={property} />
           </div>
         </div>
       </main>

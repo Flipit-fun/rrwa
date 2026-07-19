@@ -75,7 +75,7 @@ contract FullJourneyTest is Test {
     function _step1_createRaise() internal {
         vm.prank(lister);
         address raiseAddr =
-            factory.createRaise(TARGET, APY_BPS, "Office Floor, New York", "RRWA-NYC");
+            factory.createRaise(TARGET, APY_BPS, "Office Floor, New York", "RRWA-NYC", 0, 0);
         raise = Raise(raiseAddr);
         share = raise.shareToken();
         vault = raise.rentVault();

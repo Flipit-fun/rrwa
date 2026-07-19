@@ -14,6 +14,8 @@ export const factoryAbi = [
       { name: "apyBps", type: "uint256" },
       { name: "assetName", type: "string" },
       { name: "shareSymbol", type: "string" },
+      { name: "minContribution", type: "uint256" },
+      { name: "maxContribution", type: "uint256" },
     ],
     outputs: [{ name: "raiseAddr", type: "address" }],
   },
@@ -60,6 +62,8 @@ export const factoryAbi = [
       { name: "rentVault", type: "address", indexed: false },
       { name: "assetName", type: "string", indexed: false },
       { name: "shareSymbol", type: "string", indexed: false },
+      { name: "minContribution", type: "uint256", indexed: false },
+      { name: "maxContribution", type: "uint256", indexed: false },
     ],
     anonymous: false,
   },
@@ -80,7 +84,16 @@ export const raiseAbi = [
       { name: "shareToken_", type: "address" },
       { name: "rentVault_", type: "address" },
       { name: "lister_", type: "address" },
+      { name: "minContribution_", type: "uint256" },
+      { name: "maxContribution_", type: "uint256" },
     ],
+  },
+  {
+    type: "function",
+    name: "contributed",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
@@ -304,75 +317,6 @@ export const marketplaceAbi = [
   },
 ] as const;
 
-export const yieldPoolAbi = [
-  {
-    type: "function",
-    name: "apyBps",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "totalPrincipal",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "principalOf",
-    stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "earned",
-    stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "deposit",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "amount", type: "uint256" }],
-    outputs: [],
-  },
-  {
-    type: "function",
-    name: "withdraw",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "amount", type: "uint256" }],
-    outputs: [],
-  },
-  {
-    type: "function",
-    name: "claimYield",
-    stateMutability: "nonpayable",
-    inputs: [],
-    outputs: [],
-  },
-] as const;
-
-export const allowlistAbi = [
-  {
-    type: "function",
-    name: "restricted",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "bool" }],
-  },
-  {
-    type: "function",
-    name: "isAllowed",
-    stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ name: "", type: "bool" }],
-  },
-] as const;
-
 export const erc20Abi = [
   {
     type: "function",
@@ -407,6 +351,16 @@ export const erc20Abi = [
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint8" }],
+  },
+  {
+    type: "function",
+    name: "transfer",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
   },
 ] as const;
 

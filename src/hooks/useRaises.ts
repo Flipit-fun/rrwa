@@ -19,6 +19,8 @@ export type RaiseSummary = {
   shareToken: Address;
   rentVault: Address;
   lister: Address;
+  minContribution: bigint;
+  maxContribution: bigint;
 };
 
 export type RaiseWithMeta = RaiseSummary & {
@@ -52,6 +54,8 @@ async function fetchRaiseSummary(address: Address): Promise<RaiseSummary> {
     shareToken,
     rentVault,
     lister,
+    minContribution,
+    maxContribution,
   ] = res as unknown as [
     number,
     bigint,
@@ -61,6 +65,8 @@ async function fetchRaiseSummary(address: Address): Promise<RaiseSummary> {
     Address,
     Address,
     Address,
+    bigint,
+    bigint,
   ];
   return {
     address,
@@ -72,6 +78,8 @@ async function fetchRaiseSummary(address: Address): Promise<RaiseSummary> {
     shareToken,
     rentVault,
     lister,
+    minContribution,
+    maxContribution,
   };
 }
 
@@ -123,9 +131,10 @@ async function onChainFallbackMeta(
       latitude: null,
       longitude: null,
       sector: null,
-      tvlMillions: null,
       capacityPct: null,
       operatingStatus: "ACTIVE",
+      minContributionUsdc: null,
+      maxContributionUsdc: null,
     };
   } catch {
     return null;

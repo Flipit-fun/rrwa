@@ -28,11 +28,14 @@ contract RRWAFactory {
         address shareToken,
         address rentVault,
         string assetName,
-        string shareSymbol
+        string shareSymbol,
+        uint256 minContribution,
+        uint256 maxContribution
     );
 
     error ZeroTarget();
     error ZeroApy();
+    error InvalidContributionBounds();
 
     constructor(address usdc_, address allowlist_) {
         usdc = usdc_;
@@ -43,18 +46,36 @@ contract RRWAFactory {
      * @notice Create a new raise. The caller becomes the lister. After this,
      *         the lister must call `depositRent()` on the raise (funding the
      *         RentVault) before contributions are meaningful.
+     *
+     *         `minContribution`/`maxContribution` bound how much a single
+     *         wallet may put into this raise (0 means "no cap" for either).
+     *         Set both to 0 for a raise with no per-wallet limits.
      */
     function createRaise(
         uint256 target,
         uint256 apyBps,
         string calldata assetName,
-        string calldata shareSymbol
+        string calldata shareSymbol,
+        uint256 minContribution,
+        uint256 maxContribution
     ) external returns (address raiseAddr) {
         if (target == 0) revert ZeroTarget();
         if (apyBps == 0) revert ZeroApy();
+        if (maxContribution > 0 && minContribution > maxContribution) {
+            revert InvalidContributionBounds();
+        }
 
-        Raise raise =
-            new Raise(usdc, msg.sender, target, apyBps, assetName, shareSymbol, address(allowlist));
+        Raise raise = new Raise(
+            usdc,
+            msg.sender,
+            target,
+            apyBps,
+            assetName,
+            shareSymbol,
+            address(allowlist),
+            minContribution,
+            maxContribution
+        );
         raiseAddr = address(raise);
 
         raises.push(raiseAddr);
@@ -68,7 +89,9 @@ contract RRWAFactory {
             address(raise.shareToken()),
             address(raise.rentVault()),
             assetName,
-            shareSymbol
+            shareSymbol,
+            minContribution,
+            maxContribution
         );
     }
 

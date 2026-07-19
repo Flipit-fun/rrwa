@@ -23,9 +23,10 @@ export type AssetMetadata = {
   // Infrastructure/RWA fund-style listings (funds, not single residential
   // properties) surface these instead of bedrooms/bathrooms/sqft.
   sector: string | null;
-  tvlMillions: number | null;
   capacityPct: number | null;
   operatingStatus: string;
+  minContributionUsdc: string | null;
+  maxContributionUsdc: string | null;
   images?: { url: string; alt: string | null; sort: number }[];
 };
 
@@ -86,9 +87,10 @@ type AssetRow = {
   latitude: number | null;
   longitude: number | null;
   sector: string | null;
-  tvlMillions: number | null;
   capacityPct: number | null;
   operatingStatus: string;
+  minContributionUsdc: string | null;
+  maxContributionUsdc: string | null;
   images?: { url: string; alt: string | null; sort: number }[];
 };
 
@@ -113,9 +115,10 @@ function serialize(r: AssetRow): AssetMetadata {
     latitude: r.latitude,
     longitude: r.longitude,
     sector: r.sector,
-    tvlMillions: r.tvlMillions,
     capacityPct: r.capacityPct,
     operatingStatus: r.operatingStatus,
+    minContributionUsdc: r.minContributionUsdc,
+    maxContributionUsdc: r.maxContributionUsdc,
     images: r.images,
   };
 }

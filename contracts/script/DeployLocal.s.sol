@@ -7,7 +7,6 @@ import { RRWAFactory } from "../src/RRWAFactory.sol";
 import { Marketplace } from "../src/Marketplace.sol";
 import { Raise } from "../src/Raise.sol";
 import { Allowlist } from "../src/Allowlist.sol";
-import { YieldPool } from "../src/YieldPool.sol";
 
 /**
  * @notice Local-only deploy + seed for Anvil. Deploys a MockUSDC, the Factory
@@ -39,19 +38,17 @@ contract DeployLocal is Script {
         // 2. Core protocol.
         Allowlist allowlist = new Allowlist(deployer);
         // Local/dev convenience only: open the gate so any anvil account can
-        // fund a raise or the pool without a manual allowlist step. Mainnet
-        // deploys (Deploy.s.sol) leave `restricted` at its default of true.
+        // fund a raise without a manual allowlist step. Mainnet deploys
+        // (Deploy.s.sol) leave `restricted` at its default of true.
         allowlist.setRestricted(false);
 
         RRWAFactory factory = new RRWAFactory(address(usdc), address(allowlist));
         Marketplace marketplace =
             new Marketplace(address(usdc), address(factory), deployer, deployer);
 
-        // 2b. Main product: pooled 12% APY on USDG deposits. Treasury pays
-        // yield, so it must hold USDG and approve the pool to pull it — the
-        // deployer plays treasury locally and self-approves below.
-        YieldPool pool = new YieldPool(address(usdc), address(allowlist), deployer, 1200, deployer);
-        usdc.approve(address(pool), type(uint256).max);
+        // The pooled-yield product has no contract — deposits are plain
+        // USDG transfers to the treasury wallet, and withdrawals/yield are
+        // paid out manually. Nothing to deploy for it here.
 
         // 3. Seed sample raises.
         // (a) A raise we fully fund + activate so yield + secondary market work.
@@ -80,7 +77,6 @@ contract DeployLocal is Script {
         console2.log("Allowlist:           ", address(allowlist));
         console2.log("RRWAFactory:         ", address(factory));
         console2.log("Marketplace:         ", address(marketplace));
-        console2.log("YieldPool:           ", address(pool));
         console2.log("Treasury (deployer): ", deployer);
         console2.log("Sample active raise: ", activeRaise);
         console2.log("Total raises:        ", factory.raisesCount());
@@ -95,7 +91,7 @@ contract DeployLocal is Script {
         uint256 target,
         uint256 apyBps
     ) internal returns (address raiseAddr) {
-        raiseAddr = factory.createRaise(target, apyBps, name, symbol);
+        raiseAddr = factory.createRaise(target, apyBps, name, symbol, 0, 0);
         Raise raise = Raise(raiseAddr);
         // secure rent so the raise is genuinely live
         uint256 rent = raise.requiredRent();

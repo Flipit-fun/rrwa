@@ -11,12 +11,8 @@ export const FACTORY_ADDRESS = asAddress(
 export const MARKETPLACE_ADDRESS = asAddress(
   process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS
 );
-// The main product: pooled 12% APY on USDG deposits.
-export const YIELD_POOL_ADDRESS = asAddress(
-  process.env.NEXT_PUBLIC_YIELD_POOL_ADDRESS
-);
-// Gates who may invest (in the pool or a property raise). No KYC provider
-// wired up yet — the platform owner approves wallets manually for now.
+// Gates who may invest in a property raise. No KYC provider wired up yet —
+// the platform owner approves wallets manually for now.
 export const ALLOWLIST_ADDRESS = asAddress(
   process.env.NEXT_PUBLIC_ALLOWLIST_ADDRESS
 );
@@ -26,6 +22,9 @@ export const ALLOWLIST_ADDRESS = asAddress(
 export const USDG_ADDRESS = asAddress(
   process.env.NEXT_PUBLIC_USDG_ADDRESS ?? process.env.NEXT_PUBLIC_USDC_ADDRESS
 );
+// The pool has no smart contract — depositing means sending USDG straight to
+// this wallet. Withdrawals and yield payouts are handled manually by the
+// RRWA team from this same wallet, outside the app.
 export const TREASURY_ADDRESS = asAddress(
   process.env.NEXT_PUBLIC_TREASURY_ADDRESS
 );
@@ -35,7 +34,7 @@ export function areContractsConfigured(): boolean {
   return !!FACTORY_ADDRESS && !!USDG_ADDRESS;
 }
 
-/** True when the pooled YieldPool product's addresses are present. */
+/** True when the pool's deposit destination (treasury wallet) is configured. */
 export function isPoolConfigured(): boolean {
-  return !!YIELD_POOL_ADDRESS && !!USDG_ADDRESS;
+  return !!TREASURY_ADDRESS && !!USDG_ADDRESS;
 }

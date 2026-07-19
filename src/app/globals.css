@@ -1710,3 +1710,16 @@ footer {
 .ycl-dot.stable {
   background: var(--faint);
 }
+
+.prop-stats-chart {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.prop-stats-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

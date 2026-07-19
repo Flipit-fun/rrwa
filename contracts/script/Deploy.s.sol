@@ -5,24 +5,26 @@ import { Script, console2 } from "forge-std/Script.sol";
 import { RRWAFactory } from "../src/RRWAFactory.sol";
 import { Marketplace } from "../src/Marketplace.sol";
 import { Allowlist } from "../src/Allowlist.sol";
-import { YieldPool } from "../src/YieldPool.sol";
 
 /**
- * @notice Deploys the RRWA core: Allowlist + Factory + Marketplace + the
- *         main YieldPool product (flat 12% APY on USDG deposits).
+ * @notice Deploys the RRWA core: Allowlist + Factory + Marketplace.
+ *
+ *         The pooled-yield product has no contract — depositing means
+ *         sending USDG directly to the treasury wallet, and withdrawals /
+ *         yield payouts are handled manually by the RRWA team from that
+ *         same wallet. Nothing to deploy for that part.
  *
  * Required env:
  *   PRIVATE_KEY      deployer key (0x...)
  *   USDC_ADDRESS     USDG token on the target chain
- *   TREASURY_ADDRESS platform treasury (receives early-exit fees, pays pool yield)
+ *   TREASURY_ADDRESS platform treasury (receives early-exit fees; also the
+ *                    pool's deposit destination)
  *
  * Run:
  *   forge script script/Deploy.s.sol:Deploy \
  *     --rpc-url $RPC_URL --broadcast --private-key $PRIVATE_KEY
  */
 contract Deploy is Script {
-    uint256 constant POOL_APY_BPS = 1200; // 12%
-
     function run() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");
         address usdc = vm.envAddress("USDC_ADDRESS");
@@ -35,15 +37,12 @@ contract Deploy is Script {
         RRWAFactory factory = new RRWAFactory(usdc, address(allowlist));
         Marketplace marketplace =
             new Marketplace(usdc, address(factory), treasury, owner);
-        YieldPool pool =
-            new YieldPool(usdc, address(allowlist), treasury, POOL_APY_BPS, owner);
 
         vm.stopBroadcast();
 
         console2.log("Allowlist:  ", address(allowlist));
         console2.log("RRWAFactory:", address(factory));
         console2.log("Marketplace:", address(marketplace));
-        console2.log("YieldPool:  ", address(pool));
         console2.log("USDC:       ", usdc);
         console2.log("Treasury:   ", treasury);
     }

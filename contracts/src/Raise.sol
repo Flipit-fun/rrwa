@@ -41,10 +41,17 @@ contract Raise is ReentrancyGuard {
     RentVault public immutable rentVault;
     Allowlist public immutable allowlist;
 
+    // Per-wallet investment bounds. minContribution applies to each
+    // individual `fund()` call; maxContribution caps a wallet's cumulative
+    // contribution across all calls. Zero means "no cap" for either.
+    uint256 public immutable minContribution;
+    uint256 public immutable maxContribution;
+
     State public state;
     uint256 public raised;
     uint256 public funderCount;
     mapping(address => bool) private hasFunded;
+    mapping(address => uint256) public contributed;
 
     event Funded(address indexed funder, uint256 amount, uint256 raisedAfter);
     event TargetReached(uint256 raised);
@@ -60,6 +67,8 @@ contract Raise is ReentrancyGuard {
     error NotMatured();
     error TermNotElapsed();
     error NotAllowlisted();
+    error BelowMinContribution(uint256 min);
+    error ExceedsMaxContribution(uint256 max);
 
     constructor(
         address usdc_,
@@ -68,7 +77,9 @@ contract Raise is ReentrancyGuard {
         uint256 apyBps_,
         string memory assetName,
         string memory shareSymbol,
-        address allowlist_
+        address allowlist_,
+        uint256 minContribution_,
+        uint256 maxContribution_
     ) {
         usdc = IERC20(usdc_);
         lister = lister_;
@@ -76,6 +87,8 @@ contract Raise is ReentrancyGuard {
         apyBps = apyBps_;
         state = State.Raising;
         allowlist = Allowlist(allowlist_);
+        minContribution = minContribution_;
+        maxContribution = maxContribution_;
 
         shareToken = new ShareToken(assetName, shareSymbol, address(this));
         rentVault = new RentVault(usdc_, address(this));
@@ -109,9 +122,18 @@ contract Raise is ReentrancyGuard {
         if (state != State.Raising) revert NotRaising();
         if (amount == 0) revert ZeroAmount();
         if (!allowlist.isAllowed(msg.sender)) revert NotAllowlisted();
+        if (minContribution > 0 && amount < minContribution) {
+            revert BelowMinContribution(minContribution);
+        }
 
         uint256 remaining = target - raised;
         if (amount > remaining) revert ExceedsTarget(remaining);
+
+        uint256 newTotal = contributed[msg.sender] + amount;
+        if (maxContribution > 0 && newTotal > maxContribution) {
+            revert ExceedsMaxContribution(maxContribution);
+        }
+        contributed[msg.sender] = newTotal;
 
         raised += amount;
         if (!hasFunded[msg.sender]) {
@@ -176,7 +198,9 @@ contract Raise is ReentrancyGuard {
             uint256 funderCount_,
             address shareToken_,
             address rentVault_,
-            address lister_
+            address lister_,
+            uint256 minContribution_,
+            uint256 maxContribution_
         )
     {
         return (
@@ -187,7 +211,9 @@ contract Raise is ReentrancyGuard {
             funderCount,
             address(shareToken),
             address(rentVault),
-            lister
+            lister,
+            minContribution,
+            maxContribution
         );
     }
 }

@@ -32,6 +32,56 @@ enum KybStatus {
   @@schema("rrwa")
 }
 
+enum PayoutStatus {
+  REQUESTED
+  PAID
+  DECLINED
+
+  @@schema("rrwa")
+}
+
+enum PayoutKind {
+  WITHDRAWAL // return of principal
+  YIELD // yield/interest payout
+
+  @@schema("rrwa")
+}
+
+/// A record of USDG sent directly to the treasury wallet (plain ERC-20
+/// transfer, no pool contract). This is the off-chain ledger of what each
+/// wallet has put in; there is no on-chain accounting beyond the transfer
+/// itself. `depositor` self-reports the tx hash after sending, which we can
+/// spot-check against the explorer.
+model PoolDeposit {
+  id        String   @id @default(cuid())
+  depositor String // wallet address, lowercased
+  amountUsdc String // USDG base units as string (bigint-safe)
+  txHash    String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([depositor])
+  @@schema("rrwa")
+}
+
+/// A withdrawal or yield-payout request against the pool. There is no
+/// automated payment logic — the RRWA team reviews these and pays out
+/// manually from the treasury wallet, then marks the request PAID (with the
+/// payout tx hash for reference).
+model PayoutRequest {
+  id          String       @id @default(cuid())
+  requester   String // wallet address, lowercased
+  kind        PayoutKind
+  amountUsdc  String // USDG base units requested, as string
+  status      PayoutStatus @default(REQUESTED)
+  payoutTxHash String?
+  note        String? // optional note from the requester
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([requester])
+  @@schema("rrwa")
+}
+
 /// One row per listing application. Starts as an off-chain application
 /// (PENDING review); the on-chain raise (raiseAddress) is only linked once
 /// RRWA has reviewed the KYC and the lister goes on to create it.
@@ -59,9 +109,15 @@ model Asset {
   // Infrastructure/RWA fund-style listings (vs. single residential
   // properties) surface these instead of bedrooms/bathrooms/sqft.
   sector          String? // e.g. "Renewable Energy", "Aquaculture"
-  tvlMillions     Float? // total value locked, in $ millions, for display
   capacityPct     Int? // utilization/occupancy capacity, 0-100
   operatingStatus String  @default("ACTIVE") // ACTIVE | PAUSED | CLOSED
+  // Per-wallet investment bounds shown as a preview before the on-chain
+  // Raise exists. USDG base units as strings (bigint-safe). Once a Raise is
+  // deployed and linked via raiseAddress, the real on-chain values (read
+  // from Raise.minContribution/maxContribution) are authoritative and these
+  // are just the pre-launch preview shown to prospective investors.
+  minContributionUsdc String?
+  maxContributionUsdc String?
   images        AssetImage[]
   kybDocs       KybDoc[]
   kyc           Kyc?

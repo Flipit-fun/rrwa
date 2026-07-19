@@ -40,9 +40,17 @@ export const propertyDetailsSchema = z.object({
   // Infrastructure/RWA fund-style listings (funds, not single residential
   // properties) use these instead of bedrooms/bathrooms/sqft.
   sector: z.string().max(80).optional(),
-  tvlMillions: z.number().min(0).optional(),
   capacityPct: z.number().int().min(0).max(100).optional(),
   operatingStatus: z.enum(["ACTIVE", "PAUSED", "CLOSED"]).optional(),
+  // Per-wallet investment bounds preview (USDG base units as strings).
+  minContributionUsdc: z
+    .string()
+    .regex(/^\d+$/)
+    .optional(),
+  maxContributionUsdc: z
+    .string()
+    .regex(/^\d+$/)
+    .optional(),
   description: z.string().min(10, "Add a short description").max(4000),
   assetType: assetTypeEnum,
   lister: addressSchema,
@@ -101,6 +109,33 @@ export const socialsSchema = z.object({
 });
 
 export type SocialsInput = z.infer<typeof socialsSchema>;
+
+/** Record a USDG transfer sent directly to the treasury wallet. */
+export const recordDepositSchema = z.object({
+  depositor: addressSchema,
+  amountUsdc: z
+    .string()
+    .regex(/^\d+$/, "Amount must be USDG base units")
+    .refine((v) => BigInt(v) > 0n, "Amount must be greater than zero"),
+  txHash: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{64}$/, "Must be a valid transaction hash"),
+});
+
+export type RecordDepositInput = z.infer<typeof recordDepositSchema>;
+
+/** Request a manual withdrawal or yield payout from the treasury. */
+export const payoutRequestSchema = z.object({
+  requester: addressSchema,
+  kind: z.enum(["WITHDRAWAL", "YIELD"]),
+  amountUsdc: z
+    .string()
+    .regex(/^\d+$/, "Amount must be USDG base units")
+    .refine((v) => BigInt(v) > 0n, "Amount must be greater than zero"),
+  note: z.string().max(500).optional().or(z.literal("")),
+});
+
+export type PayoutRequestInput = z.infer<typeof payoutRequestSchema>;
 
 /** Payload for linking a raise address to an existing asset row. */
 export const linkRaiseSchema = z.object({
