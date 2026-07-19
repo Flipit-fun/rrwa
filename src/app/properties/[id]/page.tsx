@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import GlitchWord from "@/components/GlitchWord";
 import PropertyInvestPanel from "@/components/PropertyInvestPanel";
 import PropertyStatsChartClient from "@/components/PropertyStatsChartClient";
+import PartnershipNotice from "@/components/PartnershipNotice";
 import { getProperties } from "@/app/actions/properties";
 import { formatApyBps } from "@/lib/format";
 
@@ -41,6 +42,8 @@ export default async function PropertyDetailPage({
                 ? "Paused"
                 : "Closed"}
           </span>
+
+          <PartnershipNotice />
 
           {property.images && property.images.length > 0 && (
             <div className="prop-gallery">

@@ -2,6 +2,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import GlitchWord from "@/components/GlitchWord";
 import PropertyCard from "@/components/PropertyCard";
+import PartnershipNotice from "@/components/PartnershipNotice";
 import { getProperties } from "@/app/actions/properties";
 
 export default async function PropertiesPage() {
@@ -18,11 +19,12 @@ export default async function PropertiesPage() {
               The <GlitchWord>real-world assets</GlitchWord> behind the pool.
             </h1>
             <p>
-              Revenue collected across these infrastructure and real-world
-              asset funds is what backs the fixed APY paid out to everyone in
-              the RRWA yield pool.
+              Revenue collected across these properties is what backs the
+              yield paid out to pool participants.
             </p>
           </div>
+
+          <PartnershipNotice />
 
           {properties.length === 0 ? (
             <div className="state-box">
