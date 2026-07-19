@@ -110,8 +110,9 @@ export const socialsSchema = z.object({
 
 export type SocialsInput = z.infer<typeof socialsSchema>;
 
-/** Record a USDG transfer sent directly to the treasury wallet. */
+/** Record a USDG transfer sent directly to one property's treasury wallet. */
 export const recordDepositSchema = z.object({
+  assetId: z.string().min(1),
   depositor: addressSchema,
   amountUsdc: z
     .string()
@@ -124,8 +125,9 @@ export const recordDepositSchema = z.object({
 
 export type RecordDepositInput = z.infer<typeof recordDepositSchema>;
 
-/** Request a manual withdrawal or yield payout from the treasury. */
+/** Request a manual withdrawal or yield payout from one property's treasury. */
 export const payoutRequestSchema = z.object({
+  assetId: z.string().min(1),
   requester: addressSchema,
   kind: z.enum(["WITHDRAWAL", "YIELD"]),
   amountUsdc: z

@@ -9,22 +9,26 @@ import { EmptyState, ErrorState } from "@/components/States";
 import { usePortfolio, type Position } from "@/hooks/usePortfolio";
 import { useClaimYield } from "@/hooks/useRaiseActions";
 import { useDepositHistory, usePayoutHistory } from "@/hooks/useDashboard";
-import { useDepositTotal } from "@/hooks/useTreasuryPool";
 import { useNetworkGuard } from "@/hooks/useNetworkGuard";
-import { formatUsd, formatApyBps, usdgToNumber } from "@/lib/format";
+import { formatUsd, formatApyBps, usdgToNumber, weeklyAccruedYield } from "@/lib/format";
 import { txUrl } from "@/lib/explorer";
 
 export default function DashboardPage() {
   const guard = useNetworkGuard();
   const portfolio = usePortfolio();
-  const depositTotal = useDepositTotal();
   const deposits = useDepositHistory();
   const payouts = usePayoutHistory();
 
   const positions = portfolio.data ?? [];
   const totalShares = positions.reduce((a, p) => a + p.shares, 0n);
   const totalEarnedOnChain = positions.reduce((a, p) => a + p.earned, 0n);
-  const totalPoolDeposited = depositTotal.data ?? 0n;
+  const totalPoolDeposited = (deposits.data ?? []).reduce(
+    (sum, d) => sum + BigInt(d.amountUsdc),
+    0n
+  );
+  const totalPoolYieldAccrued = (deposits.data ?? []).reduce((sum, d) => {
+    return sum + weeklyAccruedYield(BigInt(d.amountUsdc), d.asset.apyBps, d.createdAt);
+  }, 0n);
 
   return (
     <>
@@ -54,7 +58,7 @@ export default function DashboardPage() {
             <>
               <div className="stat-row">
                 <div className="stat">
-                  <b>{positions.length}</b>
+                  <b>{positions.length + new Set((deposits.data ?? []).map((d) => d.assetId)).size}</b>
                   <span>Properties invested in</span>
                 </div>
                 <div className="stat">
@@ -62,7 +66,11 @@ export default function DashboardPage() {
                   <span>Total invested</span>
                 </div>
                 <div className="stat">
-                  <b>{formatUsd(totalEarnedOnChain, { cents: true })}</b>
+                  <b>
+                    {formatUsd(totalEarnedOnChain + totalPoolYieldAccrued, {
+                      cents: true,
+                    })}
+                  </b>
                   <span>Earned so far</span>
                 </div>
               </div>
@@ -95,30 +103,43 @@ export default function DashboardPage() {
               </section>
 
               <section style={{ marginTop: 56 }}>
-                <h2 className="dash-sec-title">Treasury pool deposits</h2>
+                <h2 className="dash-sec-title">Your property investments</h2>
                 {deposits.isLoading ? (
                   <div className="state-box">
                     <p>Loading deposit history...</p>
                   </div>
                 ) : !deposits.data || deposits.data.length === 0 ? (
                   <div className="state-box">
-                    <h3>No pool deposits yet</h3>
+                    <h3>No investments yet</h3>
                     <p>
-                      Deposits sent directly to the treasury wallet will show
-                      up here.
+                      Amounts sent directly to a property&apos;s treasury
+                      wallet will show up here.
                     </p>
                   </div>
                 ) : (
                   <div className="dash-table">
-                    <div className="dash-table-head">
+                    <div className="dash-table-head cols-5">
+                      <span>Property</span>
                       <span>Date</span>
                       <span>Amount</span>
+                      <span>Yield so far</span>
                       <span>Transaction</span>
                     </div>
                     {deposits.data.map((d) => (
-                      <div className="dash-table-row" key={d.id}>
+                      <div className="dash-table-row cols-5" key={d.id}>
+                        <span>
+                          <Link href={`/properties/${d.assetId}`}>
+                            {d.asset.name}
+                          </Link>
+                        </span>
                         <span>{new Date(d.createdAt).toLocaleDateString()}</span>
                         <span>{formatUsd(BigInt(d.amountUsdc))}</span>
+                        <span>
+                          {formatUsd(
+                            weeklyAccruedYield(BigInt(d.amountUsdc), d.asset.apyBps, d.createdAt),
+                            { cents: true }
+                          )}
+                        </span>
                         <span>
                           {txUrl(d.txHash) ? (
                             <a href={txUrl(d.txHash)} target="_blank" rel="noopener noreferrer">
@@ -146,8 +167,8 @@ export default function DashboardPage() {
                   <div className="state-box">
                     <h3>No requests yet</h3>
                     <p>
-                      Requests to withdraw or claim yield from the treasury
-                      pool will show up here.
+                      Requests to withdraw or claim yield from a property will
+                      show up here.
                     </p>
                     <Link href="/pool" className="btn line">
                       Go to properties <span className="arr">→</span>
@@ -155,14 +176,20 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="dash-table">
-                    <div className="dash-table-head">
+                    <div className="dash-table-head cols-5">
+                      <span>Property</span>
                       <span>Date</span>
                       <span>Type</span>
                       <span>Amount</span>
                       <span>Status</span>
                     </div>
                     {payouts.data.map((r) => (
-                      <div className="dash-table-row" key={r.id}>
+                      <div className="dash-table-row cols-5" key={r.id}>
+                        <span>
+                          <Link href={`/properties/${r.assetId}`}>
+                            {r.asset.name}
+                          </Link>
+                        </span>
                         <span>{new Date(r.createdAt).toLocaleDateString()}</span>
                         <span>{r.kind === "WITHDRAWAL" ? "Withdrawal" : "Yield"}</span>
                         <span>{formatUsd(BigInt(r.amountUsdc))}</span>

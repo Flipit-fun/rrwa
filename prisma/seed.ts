@@ -39,6 +39,10 @@ type SeedProperty = {
   operatingStatus: "ACTIVE" | "PAUSED" | "CLOSED";
   coverImageUrl?: string;
   images?: string[];
+  latitude?: number;
+  longitude?: number;
+  /** Env var name holding this property's dedicated treasury wallet address. */
+  treasuryEnvVar: string;
 };
 
 // A placeholder lister wallet for seeded demo listings. Replace with the
@@ -72,36 +76,35 @@ const PROPERTIES: SeedProperty[] = [
       "/properties/dubai/dubai-2.avif",
       "/properties/dubai/dubai-3.avif",
     ],
+    latitude: 25.1818,
+    longitude: 55.2835,
+    treasuryEnvVar: "PROPERTY_TREASURY_DUBAI_ADDRESS",
   },
   {
-    name: "Apartment in California",
-    city: "Los Angeles",
-    region: "United States",
+    name: "1 BHK Villa with Private Pool in Bali",
+    city: "Bali",
+    region: "Indonesia",
     description:
-      "An apartment in California, USA. Full details and photos to follow — terms below are placeholders pending the final partnership agreement with the asset owner.",
+      "A 1 BHK, 2-bed villa in Bali with a private pool. Full details to follow — terms below are placeholders pending the final partnership agreement with the asset owner.",
     assetType: "RESIDENTIAL",
-    targetUsd: 18_000,
+    targetUsd: 20_000,
     minContributionUsd: 500,
     maxContributionUsd: 5_000,
-    apyBps: 980,
+    apyBps: 1230,
     bedrooms: 2,
     bathrooms: 1,
-    areaSqft: 900,
+    areaSqft: 1100,
     operatingStatus: "ACTIVE",
-  },
-  {
-    name: "Cafe in Singapore",
-    city: "Singapore",
-    region: "Singapore",
-    description:
-      "A cafe in Singapore. Full details and photos to follow — terms below are placeholders pending the final partnership agreement with the asset owner.",
-    assetType: "COMMERCIAL",
-    targetUsd: 15_000,
-    minContributionUsd: 500,
-    maxContributionUsd: 5_000,
-    apyBps: 1040,
-    areaSqft: 450,
-    operatingStatus: "ACTIVE",
+    coverImageUrl: "/properties/bali/bali-1.avif",
+    images: [
+      "/properties/bali/bali-1.avif",
+      "/properties/bali/bali-2.avif",
+      "/properties/bali/bali-3.avif",
+      "/properties/bali/bali-4.png",
+    ],
+    latitude: -8.4449177,
+    longitude: 115.663738,
+    treasuryEnvVar: "PROPERTY_TREASURY_BALI_ADDRESS",
   },
 ];
 
@@ -115,6 +118,13 @@ async function main() {
   console.log(`Removed ${deleted.count} existing off-chain-only listing(s).`);
 
   for (const p of PROPERTIES) {
+    const treasuryAddress = process.env[p.treasuryEnvVar] ?? null;
+    if (!treasuryAddress) {
+      console.warn(
+        `Warning: ${p.treasuryEnvVar} not set — "${p.name}" will be seeded without a treasury wallet, so investing won't be open for it yet.`
+      );
+    }
+
     await prisma.asset.create({
       data: {
         name: p.name,
@@ -133,6 +143,9 @@ async function main() {
         operatingStatus: p.operatingStatus,
         kybStatus: "APPROVED",
         coverImageUrl: p.coverImageUrl ?? null,
+        latitude: p.latitude ?? null,
+        longitude: p.longitude ?? null,
+        treasuryAddress: treasuryAddress?.toLowerCase() ?? null,
         images: p.images
           ? {
               create: p.images.map((url, i) => ({

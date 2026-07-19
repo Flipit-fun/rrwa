@@ -27,6 +27,7 @@ export type AssetMetadata = {
   operatingStatus: string;
   minContributionUsdc: string | null;
   maxContributionUsdc: string | null;
+  treasuryAddress: string | null;
   images?: { url: string; alt: string | null; sort: number }[];
 };
 
@@ -91,6 +92,7 @@ type AssetRow = {
   operatingStatus: string;
   minContributionUsdc: string | null;
   maxContributionUsdc: string | null;
+  treasuryAddress: string | null;
   images?: { url: string; alt: string | null; sort: number }[];
 };
 
@@ -119,6 +121,7 @@ function serialize(r: AssetRow): AssetMetadata {
     operatingStatus: r.operatingStatus,
     minContributionUsdc: r.minContributionUsdc,
     maxContributionUsdc: r.maxContributionUsdc,
+    treasuryAddress: r.treasuryAddress,
     images: r.images,
   };
 }

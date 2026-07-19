@@ -135,6 +135,7 @@ async function onChainFallbackMeta(
       operatingStatus: "ACTIVE",
       minContributionUsdc: null,
       maxContributionUsdc: null,
+      treasuryAddress: null,
     };
   } catch {
     return null;

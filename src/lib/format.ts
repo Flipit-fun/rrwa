@@ -72,6 +72,26 @@ export function parseApyToBps(value: string): number {
   return Math.round(pct * 100);
 }
 
+/**
+ * Weekly-accrued yield on a manually-tracked deposit: apyBps of the
+ * deposited amount, divided into 52 weekly increments, counting only full
+ * weeks elapsed since the deposit. This mirrors "APY is added every week"
+ * rather than continuous per-second accrual (there's no contract streaming
+ * it — RRWA credits it manually on this cadence).
+ */
+export function weeklyAccruedYield(
+  principal: bigint,
+  apyBps: number,
+  depositedAt: Date,
+  now: Date = new Date()
+): bigint {
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const weeksElapsed = Math.floor((now.getTime() - depositedAt.getTime()) / msPerWeek);
+  if (weeksElapsed <= 0) return 0n;
+  const cappedWeeks = Math.min(weeksElapsed, 52 * 3); // cap accrual display at 3 years
+  return (principal * BigInt(apyBps) * BigInt(cappedWeeks)) / (10000n * 52n);
+}
+
 /** Funding progress as an integer percentage 0..100. */
 export function progressPct(raised: bigint, target: bigint): number {
   if (target === 0n) return 0;

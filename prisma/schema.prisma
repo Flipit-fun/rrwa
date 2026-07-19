@@ -47,38 +47,46 @@ enum PayoutKind {
   @@schema("rrwa")
 }
 
-/// A record of USDG sent directly to the treasury wallet (plain ERC-20
-/// transfer, no pool contract). This is the off-chain ledger of what each
-/// wallet has put in; there is no on-chain accounting beyond the transfer
-/// itself. `depositor` self-reports the tx hash after sending, which we can
-/// spot-check against the explorer.
+/// A record of USDG sent directly to a property's dedicated treasury wallet
+/// (plain ERC-20 transfer, no pool contract). Scoped to one Asset — each
+/// property has its own wallet, so a deposit only ever counts toward that
+/// property's yield and withdrawal limit. `depositor` self-reports the tx
+/// hash after sending, which we can spot-check against the explorer.
 model PoolDeposit {
-  id        String   @id @default(cuid())
-  depositor String // wallet address, lowercased
+  id         String   @id @default(cuid())
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId    String
+  depositor  String // wallet address, lowercased
   amountUsdc String // USDG base units as string (bigint-safe)
-  txHash    String   @unique
-  createdAt DateTime @default(now())
+  txHash     String   @unique
+  createdAt  DateTime @default(now())
 
   @@index([depositor])
+  @@index([assetId])
   @@schema("rrwa")
 }
 
-/// A withdrawal or yield-payout request against the pool. There is no
-/// automated payment logic — the RRWA team reviews these and pays out
-/// manually from the treasury wallet, then marks the request PAID (with the
-/// payout tx hash for reference).
+/// A withdrawal or yield-payout request against one property's pool. There
+/// is no automated payment logic — the RRWA team reviews these and pays out
+/// manually from that property's treasury wallet, then marks the request
+/// PAID (with the payout tx hash for reference). A withdrawal can never
+/// exceed what the requester has deposited into that specific property
+/// (enforced in the server action, not just the UI).
 model PayoutRequest {
-  id          String       @id @default(cuid())
-  requester   String // wallet address, lowercased
-  kind        PayoutKind
-  amountUsdc  String // USDG base units requested, as string
-  status      PayoutStatus @default(REQUESTED)
+  id           String       @id @default(cuid())
+  asset        Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId      String
+  requester    String // wallet address, lowercased
+  kind         PayoutKind
+  amountUsdc   String // USDG base units requested, as string
+  status       PayoutStatus @default(REQUESTED)
   payoutTxHash String?
-  note        String? // optional note from the requester
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  note         String? // optional note from the requester
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@index([requester])
+  @@index([assetId])
   @@schema("rrwa")
 }
 
@@ -118,9 +126,15 @@ model Asset {
   // are just the pre-launch preview shown to prospective investors.
   minContributionUsdc String?
   maxContributionUsdc String?
+  // This property's dedicated treasury wallet. Investing means sending USDG
+  // directly here; withdrawals/yield for this property are paid out
+  // manually from this same wallet by the RRWA team. Null until assigned.
+  treasuryAddress String?
   images        AssetImage[]
   kybDocs       KybDoc[]
   kyc           Kyc?
+  deposits      PoolDeposit[]
+  payoutRequests PayoutRequest[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

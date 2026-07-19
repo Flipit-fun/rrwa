@@ -7,6 +7,7 @@ import GlitchWord from "@/components/GlitchWord";
 import PropertyInvestPanel from "@/components/PropertyInvestPanel";
 import PropertyStatsChartClient from "@/components/PropertyStatsChartClient";
 import PartnershipNotice from "@/components/PartnershipNotice";
+import PropertyMap from "@/components/PropertyMap";
 import { getProperties } from "@/app/actions/properties";
 import { formatApyBps } from "@/lib/format";
 
@@ -109,6 +110,26 @@ export default async function PropertyDetailPage({
                   targetUsdc={property.targetUsdc}
                 />
               </div>
+
+              {property.latitude != null && property.longitude != null && (
+                <div style={{ marginTop: 32 }}>
+                  <h3
+                    style={{
+                      fontFamily: "var(--serif)",
+                      fontWeight: 400,
+                      fontSize: 22,
+                      marginBottom: 14,
+                    }}
+                  >
+                    Location
+                  </h3>
+                  <PropertyMap
+                    latitude={property.latitude}
+                    longitude={property.longitude}
+                    label={property.name}
+                  />
+                </div>
+              )}
             </div>
 
             <PropertyInvestPanel property={property} />
