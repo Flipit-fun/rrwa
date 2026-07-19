@@ -92,6 +92,29 @@ export function weeklyAccruedYield(
   return (principal * BigInt(apyBps) * BigInt(cappedWeeks)) / (10000n * 52n);
 }
 
+/** Human-readable elapsed duration since a date, e.g. "3 days", "2 weeks", "1 month". */
+export function formatDurationSince(since: Date, now: Date = new Date()): string {
+  const ms = now.getTime() - since.getTime();
+  const days = Math.floor(ms / (24 * 60 * 60 * 1000));
+  if (days < 1) return "Less than a day";
+  if (days === 1) return "1 day";
+  if (days < 7) return `${days} days`;
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return "1 week";
+  if (weeks < 8) return `${weeks} weeks`;
+  const months = Math.floor(days / 30.44);
+  if (months === 1) return "1 month";
+  if (months < 24) return `${months} months`;
+  const years = Math.floor(days / 365.25);
+  return years === 1 ? "1 year" : `${years} years`;
+}
+
+/** How many full weeks have elapsed since a date — used for yield accrual cadence. */
+export function weeksSince(since: Date, now: Date = new Date()): number {
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.max(0, Math.floor((now.getTime() - since.getTime()) / msPerWeek));
+}
+
 /** Funding progress as an integer percentage 0..100. */
 export function progressPct(raised: bigint, target: bigint): number {
   if (target === 0n) return 0;

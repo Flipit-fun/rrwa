@@ -1781,6 +1781,11 @@ footer {
   grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
 }
 
+.dash-table-head.cols-6,
+.dash-table-row.cols-6 {
+  grid-template-columns: 1.3fr 0.9fr 0.9fr 0.9fr 1fr 0.8fr;
+}
+
 .dash-table-head {
   font-size: 11.5px;
   letter-spacing: 0.08em;
@@ -1837,7 +1842,11 @@ footer {
 
 @media (max-width: 700px) {
   .dash-table-head,
-  .dash-table-row {
+  .dash-table-row,
+  .dash-table-head.cols-5,
+  .dash-table-row.cols-5,
+  .dash-table-head.cols-6,
+  .dash-table-row.cols-6 {
     grid-template-columns: 1fr 1fr;
     row-gap: 6px;
   }

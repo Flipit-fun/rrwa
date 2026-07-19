@@ -10,7 +10,13 @@ import { usePortfolio, type Position } from "@/hooks/usePortfolio";
 import { useClaimYield } from "@/hooks/useRaiseActions";
 import { useDepositHistory, usePayoutHistory } from "@/hooks/useDashboard";
 import { useNetworkGuard } from "@/hooks/useNetworkGuard";
-import { formatUsd, formatApyBps, usdgToNumber, weeklyAccruedYield } from "@/lib/format";
+import {
+  formatUsd,
+  formatApyBps,
+  usdgToNumber,
+  weeklyAccruedYield,
+  formatDurationSince,
+} from "@/lib/format";
 import { txUrl } from "@/lib/explorer";
 
 export default function DashboardPage() {
@@ -117,48 +123,60 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="dash-table">
-                    <div className="dash-table-head cols-5">
-                      <span>Property</span>
-                      <span>Date</span>
-                      <span>Amount</span>
-                      <span>Yield so far</span>
-                      <span>Transaction</span>
-                    </div>
-                    {deposits.data.map((d) => (
-                      <div className="dash-table-row cols-5" key={d.id}>
-                        <span>
-                          <Link href={`/properties/${d.assetId}`}>
-                            {d.asset.name}
-                          </Link>
-                        </span>
-                        <span>{new Date(d.createdAt).toLocaleDateString()}</span>
-                        <span>{formatUsd(BigInt(d.amountUsdc))}</span>
-                        <span>
-                          {formatUsd(
-                            weeklyAccruedYield(BigInt(d.amountUsdc), d.asset.apyBps, d.createdAt),
-                            { cents: true }
-                          )}
-                        </span>
-                        <span>
-                          {txUrl(d.txHash) ? (
-                            <a href={txUrl(d.txHash)} target="_blank" rel="noopener noreferrer">
-                              View
-                            </a>
-                          ) : (
-                            <code style={{ fontSize: 12 }}>
-                              {d.txHash.slice(0, 10)}…
-                            </code>
-                          )}
-                        </span>
+                  <>
+                    <div className="dash-table">
+                      <div className="dash-table-head cols-6">
+                        <span>Property</span>
+                        <span>Date</span>
+                        <span>Time invested</span>
+                        <span>Amount</span>
+                        <span>Yield so far</span>
+                        <span>Transaction</span>
                       </div>
-                    ))}
-                  </div>
+                      {deposits.data.map((d) => (
+                        <div className="dash-table-row cols-6" key={d.id}>
+                          <span>
+                            <Link href={`/properties/${d.assetId}`}>
+                              {d.asset.name}
+                            </Link>
+                          </span>
+                          <span>{new Date(d.createdAt).toLocaleDateString()}</span>
+                          <span>{formatDurationSince(d.createdAt)}</span>
+                          <span>{formatUsd(BigInt(d.amountUsdc))}</span>
+                          <span>
+                            {formatUsd(
+                              weeklyAccruedYield(BigInt(d.amountUsdc), d.asset.apyBps, d.createdAt),
+                              { cents: true }
+                            )}
+                          </span>
+                          <span>
+                            {txUrl(d.txHash) ? (
+                              <a href={txUrl(d.txHash)} target="_blank" rel="noopener noreferrer">
+                                View
+                              </a>
+                            ) : (
+                              <code style={{ fontSize: 12 }}>
+                                {d.txHash.slice(0, 10)}…
+                              </code>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ fontSize: 12.5, color: "var(--faint)", marginTop: 10 }}>
+                      Minimum investment per property: $5 · yield accrues
+                      weekly on the amount invested.
+                    </p>
+                  </>
                 )}
               </section>
 
               <section style={{ marginTop: 56, marginBottom: 40 }}>
                 <h2 className="dash-sec-title">Withdrawal &amp; yield requests</h2>
+                <p style={{ fontSize: 13, color: "var(--faint)", marginTop: -8, marginBottom: 20 }}>
+                  Requests are reviewed manually and typically paid out within
+                  1&ndash;2 hours.
+                </p>
                 {payouts.isLoading ? (
                   <div className="state-box">
                     <p>Loading requests...</p>

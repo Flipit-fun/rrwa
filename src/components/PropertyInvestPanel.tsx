@@ -202,7 +202,10 @@ function ManualTreasuryPanel({
           ) : requestSent ? (
             <div className="state-box" style={{ padding: 24 }}>
               <h3 style={{ fontSize: 20 }}>Request submitted</h3>
-              <p>We&apos;ll review it and send your payout manually.</p>
+              <p>
+                We&apos;ll review it and send your payout manually — usually
+                within 1&ndash;2 hours.
+              </p>
               <button className="btn line" onClick={() => setRequestSent(false)}>
                 Submit another request
               </button>
@@ -246,6 +249,10 @@ function ManualTreasuryPanel({
                   onChange={(e) => setNote(e.target.value)}
                 />
               </div>
+              <p style={{ fontSize: 12.5, color: "var(--faint)", marginBottom: 14 }}>
+                Payouts are reviewed and sent manually — typically within
+                1&ndash;2 hours.
+              </p>
               <button
                 className="btn"
                 style={{ width: "100%", justifyContent: "center" }}
