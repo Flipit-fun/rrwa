@@ -37,6 +37,8 @@ type SeedProperty = {
   bathrooms: number;
   areaSqft: number;
   operatingStatus: "ACTIVE" | "PAUSED" | "CLOSED";
+  coverImageUrl?: string;
+  images?: string[];
 };
 
 // A placeholder lister wallet for seeded demo listings. Replace with the
@@ -54,7 +56,7 @@ const PROPERTIES: SeedProperty[] = [
     city: "Dubai",
     region: "United Arab Emirates",
     description:
-      "A one-bedroom flat in Dubai, UAE. Full details and photos to follow — terms below are placeholders pending the final partnership agreement with the asset owner.",
+      "A one-bedroom flat in Dubai, UAE. Terms below are placeholders pending the final partnership agreement with the asset owner.",
     assetType: "RESIDENTIAL",
     targetUsd: 12_000,
     minContributionUsd: 500,
@@ -64,6 +66,12 @@ const PROPERTIES: SeedProperty[] = [
     bathrooms: 1,
     areaSqft: 750,
     operatingStatus: "ACTIVE",
+    coverImageUrl: "/properties/dubai/dubai-1.avif",
+    images: [
+      "/properties/dubai/dubai-1.avif",
+      "/properties/dubai/dubai-2.avif",
+      "/properties/dubai/dubai-3.avif",
+    ],
   },
   {
     name: "Apartment in California",
@@ -126,7 +134,16 @@ async function main() {
         areaSqft: p.areaSqft,
         operatingStatus: p.operatingStatus,
         kybStatus: "APPROVED",
-        coverImageUrl: null,
+        coverImageUrl: p.coverImageUrl ?? null,
+        images: p.images
+          ? {
+              create: p.images.map((url, i) => ({
+                url,
+                alt: `${p.name} photo ${i + 1}`,
+                sort: i,
+              })),
+            }
+          : undefined,
       },
     });
     console.log(`Seeded "${p.name}" (${p.city}, ${p.region}).`);
