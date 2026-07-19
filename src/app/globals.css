@@ -1670,9 +1670,10 @@ footer {
 /* ---------- yield comparison chart (homepage) ---------- */
 .yield-chart {
   border: 1px solid var(--hairline);
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--paper);
-  padding: 28px 20px 16px;
+  padding: 36px 32px 24px;
+  box-shadow: 0 24px 48px -24px rgba(20, 22, 31, 0.12);
 }
 
 .yield-chart svg {
@@ -1684,9 +1685,9 @@ footer {
 .yield-chart-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 28px;
-  margin-top: 8px;
-  padding-top: 16px;
+  gap: 32px;
+  margin-top: 20px;
+  padding-top: 20px;
   border-top: 1px solid var(--hairline);
 }
 
@@ -1694,27 +1695,37 @@ footer {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--body);
 }
 
 .ycl-item b {
   color: var(--ink);
+  font-weight: 600;
 }
 
 .ycl-dot {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
 }
 
 .ycl-dot.rrwa {
   background: var(--blue);
+  color: var(--blue);
 }
 
 .ycl-dot.stable {
   background: var(--faint);
+  color: var(--faint);
+}
+
+@media (max-width: 600px) {
+  .yield-chart {
+    padding: 24px 18px 18px;
+  }
 }
 
 .prop-stats-chart {
