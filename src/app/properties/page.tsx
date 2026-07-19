@@ -15,12 +15,12 @@ export default async function PropertiesPage() {
           <div className="page-head">
             <span className="eyebrow">Backing the yield</span>
             <h1>
-              The <GlitchWord>properties</GlitchWord> behind the pool.
+              The <GlitchWord>real-world assets</GlitchWord> behind the pool.
             </h1>
             <p>
-              Rent collected from these listed properties is what funds the
-              fixed APY paid out to everyone in the RRWA yield pool. Each one
-              can also be crowdfunded individually on the marketplace.
+              Revenue collected across these infrastructure and real-world
+              asset funds is what backs the fixed APY paid out to everyone in
+              the RRWA yield pool.
             </p>
           </div>
 
@@ -30,7 +30,7 @@ export default async function PropertiesPage() {
               <p>
                 The property showcase reads from the database. Make sure{" "}
                 <code>DATABASE_URL</code> is set and run{" "}
-                <code>npm run db:seed</code> to load the six sample listings.
+                <code>npm run db:seed</code> to load the sample listings.
               </p>
             </div>
           ) : (

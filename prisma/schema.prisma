@@ -17,6 +17,7 @@ enum AssetType {
   COMMERCIAL
   WAREHOUSE
   LAND
+  INFRASTRUCTURE
   OTHER
 
   @@schema("rrwa")
@@ -55,6 +56,12 @@ model Asset {
   coverImageUrl String?
   latitude      Float?
   longitude     Float?
+  // Infrastructure/RWA fund-style listings (vs. single residential
+  // properties) surface these instead of bedrooms/bathrooms/sqft.
+  sector          String? // e.g. "Renewable Energy", "Aquaculture"
+  tvlMillions     Float? // total value locked, in $ millions, for display
+  capacityPct     Int? // utilization/occupancy capacity, 0-100
+  operatingStatus String  @default("ACTIVE") // ACTIVE | PAUSED | CLOSED
   images        AssetImage[]
   kybDocs       KybDoc[]
   kyc           Kyc?

@@ -5,6 +5,7 @@ export const assetTypeEnum = z.enum([
   "COMMERCIAL",
   "WAREHOUSE",
   "LAND",
+  "INFRASTRUCTURE",
   "OTHER",
 ]);
 
@@ -17,6 +18,7 @@ export const ASSET_TYPE_LABELS: Record<
   COMMERCIAL: "Commercial property",
   WAREHOUSE: "Warehouse / industrial",
   LAND: "Land / plot",
+  INFRASTRUCTURE: "Infrastructure / RWA fund",
   OTHER: "Other real-world asset",
 };
 
@@ -35,6 +37,12 @@ export const propertyDetailsSchema = z.object({
   bedrooms: z.number().int().min(0).max(50).optional(),
   bathrooms: z.number().int().min(0).max(50).optional(),
   areaSqft: z.number().int().min(0).max(10_000_000).optional(),
+  // Infrastructure/RWA fund-style listings (funds, not single residential
+  // properties) use these instead of bedrooms/bathrooms/sqft.
+  sector: z.string().max(80).optional(),
+  tvlMillions: z.number().min(0).optional(),
+  capacityPct: z.number().int().min(0).max(100).optional(),
+  operatingStatus: z.enum(["ACTIVE", "PAUSED", "CLOSED"]).optional(),
   description: z.string().min(10, "Add a short description").max(4000),
   assetType: assetTypeEnum,
   lister: addressSchema,

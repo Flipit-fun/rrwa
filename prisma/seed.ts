@@ -1,10 +1,10 @@
 /**
- * Seeds the 6 showcase properties for the RRWA marketplace's "side feature"
- * (individual property raises). Images are free-to-use Unsplash stock
- * photography styled to match each market — not actual Airbnb listing photos,
- * since scraping/reusing real Airbnb photos would violate their terms and
- * copyright. Coordinates are approximate, real-world locations for each city
- * so the map on the asset page has something accurate to point at.
+ * Seeds the RRWA infrastructure/RWA fund listings shown on the properties
+ * page — funds backing real-world sectors (energy, logistics, telecom,
+ * hospitality, medical leasing, aquaculture, etc.), each with a TVL, fixed
+ * APY, and utilization capacity rather than a single residential property's
+ * bedrooms/bathrooms. Images are free-to-use Unsplash stock photography
+ * matched to each sector, not photos of any specific real facility.
  *
  * Run with: npm run db:seed
  * Requires DATABASE_URL / DIRECT_URL pointed at your Supabase Postgres
@@ -20,18 +20,17 @@ const connectionString =
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-type SeedProperty = {
+type SeedFund = {
   name: string;
-  streetAddress: string;
+  sector: string;
   city: string;
   region: string;
-  bedrooms: number;
-  bathrooms: number;
-  areaSqft: number;
   description: string;
-  assetType: "RESIDENTIAL" | "COMMERCIAL" | "WAREHOUSE" | "LAND" | "OTHER";
-  targetUsdc: string; // USDG base units (6 decimals), as string
+  assetType: "INFRASTRUCTURE";
+  tvlMillions: number;
   apyBps: number;
+  capacityPct: number;
+  operatingStatus: "ACTIVE" | "PAUSED" | "CLOSED";
   latitude: number;
   longitude: number;
   coverImageUrl: string;
@@ -43,191 +42,228 @@ type SeedProperty = {
 // operator wallet before going live.
 const DEMO_LISTER = "0x000000000000000000000000000000000000d3";
 
-const PROPERTIES: SeedProperty[] = [
+/** TVL in $ millions -> USDG base units (6 decimals) as a string. */
+function tvlToUsdgBaseUnits(millions: number): string {
+  return (BigInt(Math.round(millions * 1_000_000)) * 1_000_000n).toString();
+}
+
+const FUNDS: SeedFund[] = [
   {
-    name: "Palm Jumeirah Beachfront Villa",
-    streetAddress: "Frond M, Palm Jumeirah",
-    city: "Dubai",
-    region: "United Arab Emirates",
-    bedrooms: 5,
-    bathrooms: 6,
-    areaSqft: 7200,
-    description:
-      "A 5-bedroom beachfront villa on Palm Jumeirah with a private pool, direct beach access, and skyline views of the Dubai Marina. One of the most requested short-term rentals in the city, with strong year-round occupancy from tourism and business travel.",
-    assetType: "RESIDENTIAL",
-    targetUsdc: "2500000000000", // $2,500,000
-    apyBps: 1200,
-    latitude: 25.1124,
-    longitude: 55.139,
-    coverImageUrl:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80",
-    images: [
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=1200&q=80",
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80",
-    ],
-    lister: DEMO_LISTER,
-  },
-  {
-    name: "Trastevere Rooftop Loft",
-    streetAddress: "Via della Scala 12, Trastevere",
-    city: "Rome",
-    region: "Italy",
-    bedrooms: 2,
-    bathrooms: 2,
-    areaSqft: 1100,
-    description:
-      "A restored 2-bedroom loft in Rome's Trastevere district with a private rooftop terrace overlooking the city's terracotta skyline. Walking distance to the Tiber and the neighborhood's cafes and trattorias, with consistent demand from European city-break travelers.",
-    assetType: "RESIDENTIAL",
-    targetUsdc: "850000000000", // $850,000
-    apyBps: 1150,
-    latitude: 41.8896,
-    longitude: 12.4692,
-    coverImageUrl:
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",
-    images: [
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",
-      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80",
-      "https://images.unsplash.com/photo-1503917988258-f87a78e3c995?w=1200&q=80",
-    ],
-    lister: DEMO_LISTER,
-  },
-  {
-    name: "South Beach Art Deco Condo",
-    streetAddress: "1500 Ocean Drive, South Beach",
-    city: "Miami",
+    name: "NovaGrid Infrastructure",
+    sector: "Renewable Energy",
+    city: "Austin",
     region: "United States",
-    bedrooms: 2,
-    bathrooms: 2,
-    areaSqft: 1350,
     description:
-      "A fully furnished 2-bedroom condo in the heart of Miami's South Beach Art Deco district, two blocks from Ocean Drive. Steady bookings from the city's year-round tourism and events calendar make it one of the stronger short-term yield markets in the US.",
-    assetType: "RESIDENTIAL",
-    targetUsdc: "1200000000000", // $1,200,000
-    apyBps: 1100,
-    latitude: 25.7827,
-    longitude: -80.13,
+      "A portfolio of grid-scale battery storage and transmission infrastructure supporting renewable energy integration across Texas. Revenue comes from long-term capacity contracts with regional utilities.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 425,
+    apyBps: 1180,
+    capacityPct: 74,
+    operatingStatus: "ACTIVE",
+    latitude: 30.2672,
+    longitude: -97.7431,
     coverImageUrl:
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=80",
+      "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&q=80",
     images: [
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=80",
-      "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=1200&q=80",
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80",
+      "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&q=80",
+      "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&q=80",
     ],
     lister: DEMO_LISTER,
   },
   {
-    name: "Uluwatu Cliffside Villa",
-    streetAddress: "Jl. Pantai Suluban, Uluwatu",
-    city: "Bali",
-    region: "Indonesia",
-    bedrooms: 4,
-    bathrooms: 5,
-    areaSqft: 4800,
+    name: "BluePeak Warehousing",
+    sector: "Industrial Storage",
+    city: "Memphis",
+    region: "United States",
     description:
-      "A 4-bedroom cliffside villa near Uluwatu with an infinity pool overlooking the Indian Ocean. Bali's short-term rental market has grown steadily with the rise of remote work and long-stay travel, keeping occupancy high through most of the year.",
-    assetType: "RESIDENTIAL",
-    targetUsdc: "950000000000", // $950,000
-    apyBps: 1300,
-    latitude: -8.8291,
-    longitude: 115.0849,
+      "A network of climate-controlled industrial storage facilities serving regional distribution and e-commerce fulfillment tenants under multi-year leases.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 310,
+    apyBps: 960,
+    capacityPct: 42,
+    operatingStatus: "ACTIVE",
+    latitude: 35.1495,
+    longitude: -90.0490,
     coverImageUrl:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
+      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=80",
     images: [
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",
+      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=80",
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&q=80",
     ],
     lister: DEMO_LISTER,
   },
   {
-    name: "Shibuya Compact City Apartment",
-    streetAddress: "2-1 Dogenzaka, Shibuya",
-    city: "Tokyo",
-    region: "Japan",
-    bedrooms: 1,
-    bathrooms: 1,
-    areaSqft: 420,
+    name: "TerraFiber Networks",
+    sector: "Fiber & Telecom",
+    city: "Denver",
+    region: "United States",
     description:
-      "A minimalist 1-bedroom apartment steps from Shibuya Crossing, designed for the compact-living style Tokyo travelers expect. Dense foot traffic and a limited short-term rental supply in central wards support strong nightly rates.",
-    assetType: "RESIDENTIAL",
-    targetUsdc: "700000000000", // $700,000
-    apyBps: 1050,
-    latitude: 35.6595,
-    longitude: 139.7005,
+      "Regional fiber-optic backbone infrastructure leased to telecom carriers and enterprise customers, with revenue backed by long-term dark fiber and lit-service contracts.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 590,
+    apyBps: 1090,
+    capacityPct: 81,
+    operatingStatus: "ACTIVE",
+    latitude: 39.7392,
+    longitude: -104.9903,
     coverImageUrl:
-      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&q=80",
+      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&q=80",
     images: [
-      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&q=80",
-      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80",
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1200&q=80",
+      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&q=80",
+      "https://images.unsplash.com/photo-1516937941344-00b4e0337589?w=1200&q=80",
     ],
     lister: DEMO_LISTER,
   },
   {
-    name: "Le Marais Haussmann Flat",
-    streetAddress: "18 Rue des Rosiers, Le Marais",
-    city: "Paris",
-    region: "France",
-    bedrooms: 2,
-    bathrooms: 1,
-    areaSqft: 980,
+    name: "UrbanStay Portfolio",
+    sector: "Hospitality",
+    city: "Lisbon",
+    region: "Portugal",
     description:
-      "A classic Haussmann-style 2-bedroom flat in Le Marais, with original moldings, tall windows, and a balcony over a quiet cobblestone street. One of Paris's most tourist-dense arrondissements, with reliable demand across every season.",
-    assetType: "RESIDENTIAL",
-    targetUsdc: "1100000000000", // $1,100,000
-    apyBps: 1000,
-    latitude: 48.8589,
-    longitude: 2.3622,
+      "A portfolio of branded short-term rental and boutique hotel properties in high-demand European city centers, generating yield from nightly and extended-stay bookings.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 810,
+    apyBps: 870,
+    capacityPct: 63,
+    operatingStatus: "ACTIVE",
+    latitude: 38.7223,
+    longitude: -9.1393,
     coverImageUrl:
-      "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80",
     images: [
-      "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80",
-      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=1200&q=80",
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80",
+    ],
+    lister: DEMO_LISTER,
+  },
+  {
+    name: "MedSupply Capital",
+    sector: "Medical Equipment Leasing",
+    city: "Boston",
+    region: "United States",
+    description:
+      "Finances and leases diagnostic and surgical equipment to hospital networks and outpatient clinics, earning yield from multi-year equipment lease payments.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 460,
+    apyBps: 1210,
+    capacityPct: 57,
+    operatingStatus: "ACTIVE",
+    latitude: 42.3601,
+    longitude: -71.0589,
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1200&q=80",
+      "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&q=80",
+    ],
+    lister: DEMO_LISTER,
+  },
+  {
+    name: "GreenVolt Solar Fund",
+    sector: "Solar Infrastructure",
+    city: "Phoenix",
+    region: "United States",
+    description:
+      "Owns and operates utility-scale solar generation assets under long-term power purchase agreements with regional grid operators.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 680,
+    apyBps: 1040,
+    capacityPct: 69,
+    operatingStatus: "ACTIVE",
+    latitude: 33.4484,
+    longitude: -112.0740,
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&q=80",
+      "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&q=80",
+    ],
+    lister: DEMO_LISTER,
+  },
+  {
+    name: "CargoLink Logistics",
+    sector: "Freight Financing",
+    city: "Rotterdam",
+    region: "Netherlands",
+    description:
+      "Finances freight containers and cross-border trucking fleets serving one of Europe's busiest port and logistics corridors, earning yield from freight lease and financing contracts.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 395,
+    apyBps: 1150,
+    capacityPct: 51,
+    operatingStatus: "ACTIVE",
+    latitude: 51.9244,
+    longitude: 4.4777,
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=1200&q=80",
+      "https://images.unsplash.com/photo-1605152276897-4f618f831968?w=1200&q=80",
+    ],
+    lister: DEMO_LISTER,
+  },
+  {
+    name: "AquaHarvest Fisheries",
+    sector: "Aquaculture",
+    city: "Bergen",
+    region: "Norway",
+    description:
+      "Operates offshore salmon and shellfish aquaculture facilities supplying seafood exporters, with yield generated from harvest contracts and export agreements.",
+    assetType: "INFRASTRUCTURE",
+    tvlMillions: 275,
+    apyBps: 1320,
+    capacityPct: 36,
+    operatingStatus: "ACTIVE",
+    latitude: 60.3913,
+    longitude: 5.3221,
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200&q=80",
     ],
     lister: DEMO_LISTER,
   },
 ];
 
 async function main() {
-  for (const p of PROPERTIES) {
+  for (const f of FUNDS) {
     const existing = await prisma.asset.findFirst({
-      where: { name: p.name, city: p.city },
+      where: { name: f.name, city: f.city },
     });
     if (existing) {
-      console.log(`Skipping "${p.name}" — already seeded.`);
+      console.log(`Skipping "${f.name}" — already seeded.`);
       continue;
     }
 
     await prisma.asset.create({
       data: {
-        name: p.name,
-        streetAddress: p.streetAddress,
-        city: p.city,
-        region: p.region,
-        bedrooms: p.bedrooms,
-        bathrooms: p.bathrooms,
-        areaSqft: p.areaSqft,
-        description: p.description,
-        assetType: p.assetType,
-        lister: p.lister,
-        targetUsdc: p.targetUsdc,
-        apyBps: p.apyBps,
+        name: f.name,
+        sector: f.sector,
+        city: f.city,
+        region: f.region,
+        description: f.description,
+        assetType: f.assetType,
+        lister: f.lister,
+        targetUsdc: tvlToUsdgBaseUnits(f.tvlMillions),
+        tvlMillions: f.tvlMillions,
+        apyBps: f.apyBps,
+        capacityPct: f.capacityPct,
+        operatingStatus: f.operatingStatus,
         kybStatus: "APPROVED",
-        coverImageUrl: p.coverImageUrl,
-        latitude: p.latitude,
-        longitude: p.longitude,
+        coverImageUrl: f.coverImageUrl,
+        latitude: f.latitude,
+        longitude: f.longitude,
         images: {
-          create: p.images.map((url, i) => ({
+          create: f.images.map((url, i) => ({
             url,
-            alt: `${p.name} photo ${i + 1}`,
+            alt: `${f.name} photo ${i + 1}`,
             sort: i,
           })),
         },
       },
     });
-    console.log(`Seeded "${p.name}" (${p.city}, ${p.region}).`);
+    console.log(`Seeded "${f.name}" (${f.city}, ${f.region}).`);
   }
 }
 

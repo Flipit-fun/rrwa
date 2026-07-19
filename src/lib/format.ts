@@ -72,6 +72,11 @@ export function parseApyToBps(value: string): number {
   return Math.round(pct * 100);
 }
 
+/** Format TVL in $ millions, e.g. 425 -> "$425M". */
+export function formatTvlMillions(millions: number): string {
+  return `$${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`;
+}
+
 /** Funding progress as an integer percentage 0..100. */
 export function progressPct(raised: bigint, target: bigint): number {
   if (target === 0n) return 0;

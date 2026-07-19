@@ -122,6 +122,10 @@ async function onChainFallbackMeta(
       coverImageUrl: null,
       latitude: null,
       longitude: null,
+      sector: null,
+      tvlMillions: null,
+      capacityPct: null,
+      operatingStatus: "ACTIVE",
     };
   } catch {
     return null;

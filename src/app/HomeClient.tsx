@@ -87,8 +87,8 @@ export default function HomeClient({
               <span>Fixed APY</span>
             </div>
             <div className="hf">
-              <b>6</b>
-              <span>Properties listed</span>
+              <b>8</b>
+              <span>Assets listed</span>
             </div>
             <div className="hf">
               <b>USDG</b>
@@ -101,35 +101,35 @@ export default function HomeClient({
           </div>
         </div>
 
-        {/* The 6 listed properties, right under the hero */}
+        {/* The listed real-world asset funds, right under the hero */}
         <section id="properties">
           <div className="wrap">
             <div className="sec-head rv">
               <span className="eyebrow">Backing the yield</span>
               <h2>
-                Six properties, <GlitchWord>one pool</GlitchWord>.
+                Eight real-world assets, <GlitchWord>one pool</GlitchWord>.
               </h2>
               <p>
-                Rent collected from these listed properties funds the fixed
-                APY paid out to everyone in the pool. Click any property to
-                see its photos and location.
+                Revenue collected across these infrastructure and real-world
+                asset funds backs the fixed APY paid out to everyone in the
+                pool. Click any listing for details and location.
               </p>
             </div>
             {properties.length > 0 ? (
               <div className="prop-grid home-prop-grid rv">
-                {properties.slice(0, 6).map((p) => (
+                {properties.slice(0, 8).map((p) => (
                   <PropertyCard key={p.id} property={p} />
                 ))}
               </div>
             ) : (
               <div className="state-box rv">
-                <h3>No properties loaded yet</h3>
-                <p>Check back shortly — properties are on their way.</p>
+                <h3>No assets loaded yet</h3>
+                <p>Check back shortly — listings are on their way.</p>
               </div>
             )}
             <div style={{ marginTop: 32, textAlign: "center" }}>
               <Link href="/properties" className="btn line">
-                See all properties <span className="arr">→</span>
+                See all assets <span className="arr">→</span>
               </Link>
             </div>
           </div>

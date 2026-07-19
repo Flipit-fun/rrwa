@@ -6,7 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import GlitchWord from "@/components/GlitchWord";
 import PropertyMap from "@/components/PropertyMap";
 import { getProperties } from "@/app/actions/properties";
-import { formatUsd, formatApyBps } from "@/lib/format";
+import { formatUsd, formatApyBps, formatTvlMillions } from "@/lib/format";
 
 export default async function PropertyDetailPage({
   params,
@@ -25,11 +25,19 @@ export default async function PropertyDetailPage({
       <main>
         <div className="wrap page">
           <span className="eyebrow">
+            {property.sector ? `${property.sector} · ` : ""}
             {property.city}, {property.region}
           </span>
-          <h1 style={{ marginBottom: 24 }}>
+          <h1 style={{ marginBottom: 8 }}>
             <GlitchWord>{property.name}</GlitchWord>
           </h1>
+          <span className={`prop-status-inline prop-status-${property.operatingStatus.toLowerCase()}`}>
+            {property.operatingStatus === "ACTIVE"
+              ? "Active"
+              : property.operatingStatus === "PAUSED"
+                ? "Paused"
+                : "Closed"}
+          </span>
 
           {property.images && property.images.length > 0 && (
             <div className="prop-gallery">
@@ -52,17 +60,23 @@ export default async function PropertyDetailPage({
             <div>
               <div className="stat-row">
                 <div className="stat">
+                  <b>
+                    {property.tvlMillions != null
+                      ? formatTvlMillions(property.tvlMillions)
+                      : formatUsd(BigInt(property.targetUsdc))}
+                  </b>
+                  <span>TVL</span>
+                </div>
+                <div className="stat">
                   <b>{formatApyBps(property.apyBps)}</b>
                   <span>APY</span>
                 </div>
-                <div className="stat">
-                  <b>{formatUsd(BigInt(property.targetUsdc))}</b>
-                  <span>Value</span>
-                </div>
-                <div className="stat">
-                  <b>{property.assetType}</b>
-                  <span>Type</span>
-                </div>
+                {property.capacityPct != null && (
+                  <div className="stat">
+                    <b>{property.capacityPct}%</b>
+                    <span>Capacity</span>
+                  </div>
+                )}
               </div>
 
               <p

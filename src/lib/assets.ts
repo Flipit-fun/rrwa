@@ -20,6 +20,12 @@ export type AssetMetadata = {
   coverImageUrl: string | null;
   latitude: number | null;
   longitude: number | null;
+  // Infrastructure/RWA fund-style listings (funds, not single residential
+  // properties) surface these instead of bedrooms/bathrooms/sqft.
+  sector: string | null;
+  tvlMillions: number | null;
+  capacityPct: number | null;
+  operatingStatus: string;
   images?: { url: string; alt: string | null; sort: number }[];
 };
 
@@ -51,7 +57,7 @@ export async function getMetadataByRaiseAddress(
   return row ? serialize(row) : null;
 }
 
-/** Fetch all seeded assets (used to power the "6 properties" showcase). */
+/** Fetch all seeded assets (used to power the properties showcase). */
 export async function getAllAssets(): Promise<AssetMetadata[]> {
   const rows = await prisma.asset.findMany({
     include: { images: { orderBy: { sort: "asc" } } },
@@ -79,6 +85,10 @@ type AssetRow = {
   coverImageUrl: string | null;
   latitude: number | null;
   longitude: number | null;
+  sector: string | null;
+  tvlMillions: number | null;
+  capacityPct: number | null;
+  operatingStatus: string;
   images?: { url: string; alt: string | null; sort: number }[];
 };
 
@@ -102,6 +112,10 @@ function serialize(r: AssetRow): AssetMetadata {
     coverImageUrl: r.coverImageUrl,
     latitude: r.latitude,
     longitude: r.longitude,
+    sector: r.sector,
+    tvlMillions: r.tvlMillions,
+    capacityPct: r.capacityPct,
+    operatingStatus: r.operatingStatus,
     images: r.images,
   };
 }
