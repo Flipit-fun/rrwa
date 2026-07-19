@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * Hand-rolled SVG line chart comparing typical stablecoin yield against the
- * RRWA pool's fixed 12% APY, both compounding on a $10,000 principal over 12
- * months. No charting library needed for two lines — keeps the bundle light
- * and matches the site's existing hand-built visual style (see FlowField).
+ * Hand-rolled SVG line chart comparing typical stablecoin yield against
+ * RRWA's top currently-listed property APY, both compounding on a $10,000
+ * principal over 12 months. No charting library needed for two lines —
+ * keeps the bundle light and matches the site's existing hand-built visual
+ * style (see FlowField).
  */
 const MONTHS = 13; // month 0 (start) through month 12
 const PRINCIPAL = 10_000;
 const STABLECOIN_APY = 0.04; // typical stablecoin lending yield, for comparison
-const RRWA_APY = 0.12;
 
 function growthSeries(apy: number): number[] {
   return Array.from({ length: MONTHS }, (_, m) => {
@@ -37,9 +37,10 @@ function buildPath(values: number[], maxY: number): string {
     .join(" ");
 }
 
-export default function YieldChart() {
+export default function YieldChart({ topApyBps }: { topApyBps: number }) {
+  const rrwaApy = topApyBps / 10000;
   const stable = growthSeries(STABLECOIN_APY);
-  const rrwa = growthSeries(RRWA_APY);
+  const rrwa = growthSeries(rrwaApy);
   const maxY = Math.max(...rrwa) * 1.08;
 
   const stablePath = buildPath(stable, maxY);
@@ -56,7 +57,7 @@ export default function YieldChart() {
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
-        aria-label="Line chart comparing a $10,000 deposit growing at 4% stablecoin yield versus RRWA's 12% fixed APY over 12 months. The RRWA line ends noticeably higher."
+        aria-label={`Line chart comparing a $10,000 deposit growing at 4% stablecoin yield versus RRWA's top listed property APY of ${(rrwaApy * 100).toFixed(1)}% over 12 months. The RRWA line ends noticeably higher.`}
       >
         {/* gridlines */}
         {gridLines.map((g) => {
@@ -122,8 +123,8 @@ export default function YieldChart() {
         <div className="ycl-item">
           <span className="ycl-dot rrwa" />
           <span>
-            RRWA pool — <b>12% APY</b> · $10,000 → $
-            {Math.round(rrwa[rrwa.length - 1]).toLocaleString()}
+            RRWA top property — <b>{(rrwaApy * 100).toFixed(1)}% APY</b> ·
+            $10,000 → ${Math.round(rrwa[rrwa.length - 1]).toLocaleString()}
           </span>
         </div>
         <div className="ycl-item">

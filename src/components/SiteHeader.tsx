@@ -12,10 +12,10 @@ export default function SiteHeader() {
         </Link>
         <nav className="nav-links">
           <Link href="/pool">Earn yield</Link>
-          <Link href="/properties">Properties</Link>
           <Link href="/market">Marketplace</Link>
           <Link href="/list">List your asset</Link>
           <Link href="/portfolio">Portfolio</Link>
+          <Link href="/dashboard">Dashboard</Link>
           <ConnectButton
             showBalance={false}
             accountStatus="address"

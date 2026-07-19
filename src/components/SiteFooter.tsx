@@ -15,10 +15,10 @@ export default function SiteFooter({ onReplayIntro }: FooterProps) {
         </a>
         <div className="foot-links">
           <Link href="/pool">Earn yield</Link>
-          <Link href="/properties">Properties</Link>
           <Link href="/market">Marketplace</Link>
           <Link href="/list">List</Link>
           <Link href="/portfolio">Portfolio</Link>
+          <Link href="/dashboard">Dashboard</Link>
           {onReplayIntro && (
             <button
               onClick={onReplayIntro}

@@ -11,6 +11,7 @@ import GlitchWord from "@/components/GlitchWord";
 import MarketPreview from "@/components/MarketPreview";
 import YieldChart from "@/components/YieldChart";
 import PropertyCard from "@/components/PropertyCard";
+import { formatApyBps } from "@/lib/format";
 import type { AssetMetadata } from "@/lib/assets";
 
 const INTRO_FLAG = "rrwa_intro_seen";
@@ -20,6 +21,9 @@ export default function HomeClient({
 }: {
   properties: AssetMetadata[];
 }) {
+  const maxApyBps = properties.length
+    ? Math.max(...properties.map((p) => p.apyBps))
+    : 1200;
   // Intro shows once per browser. We start hidden to avoid a flash before we
   // can read localStorage, then reveal on mount if it hasn't been seen.
   const [showIntro, setShowIntro] = useState(false);
@@ -64,30 +68,27 @@ export default function HomeClient({
             Robin Real World Assets — on Robinhood Chain
           </span>
           <h1 className="rv">
-            Earn 12% APY
+            Earn up to {formatApyBps(maxApyBps)} APY*
             <br />
             backed by <GlitchWord>real estate</GlitchWord>.
           </h1>
           <p className="sub rv">
-            Deposit USDG and earn a fixed 12% annual yield, funded by rent
-            collected across real-world properties RRWA has listed — no
-            picking individual properties, no lockups.
+            Deposit USDG and earn yield backed by real-world properties RRWA
+            has listed. Each property sets its own rate — pick one and start
+            earning.
           </p>
           <div className="hero-cta rv">
             <Link href="/pool" className="btn">
               Start earning <span className="arr">→</span>
             </Link>
-            <Link href="/properties" className="btn line">
-              See the properties
-            </Link>
           </div>
           <div className="hero-foot rv">
             <div className="hf">
-              <b>12%</b>
-              <span>Fixed APY</span>
+              <b>{formatApyBps(maxApyBps)}</b>
+              <span>Top APY*</span>
             </div>
             <div className="hf">
-              <b>8</b>
+              <b>{properties.length}</b>
               <span>Assets listed</span>
             </div>
             <div className="hf">
@@ -99,20 +100,22 @@ export default function HomeClient({
               <span>Robinhood Chain</span>
             </div>
           </div>
+          <p className="hero-disclaimer rv">
+            *APY varies by property. Rates shown reflect the highest currently listed.
+          </p>
         </div>
 
         {/* The listed real-world asset funds, right under the hero */}
         <section id="properties">
           <div className="wrap">
             <div className="sec-head rv">
-              <span className="eyebrow">Backing the yield</span>
+              <span className="eyebrow">Earn yield</span>
               <h2>
-                Eight real-world assets, <GlitchWord>one pool</GlitchWord>.
+                {properties.length} real-world assets, <GlitchWord>each earning yield</GlitchWord>.
               </h2>
               <p>
-                Revenue collected across these infrastructure and real-world
-                asset funds backs the fixed APY paid out to everyone in the
-                pool. Click any listing for details and location.
+                Every listing below is backed by real revenue. Click one to
+                see the details and start earning.
               </p>
             </div>
             {properties.length > 0 ? (
@@ -128,14 +131,14 @@ export default function HomeClient({
               </div>
             )}
             <div style={{ marginTop: 32, textAlign: "center" }}>
-              <Link href="/properties" className="btn line">
+              <Link href="/pool" className="btn line">
                 See all assets <span className="arr">→</span>
               </Link>
             </div>
           </div>
         </section>
 
-        {/* Yield comparison: stablecoin lending vs. RRWA's fixed 12% APY */}
+        {/* Yield comparison: stablecoin lending vs. RRWA's top listed APY */}
         <section id="yield">
           <div className="wrap">
             <div className="sec-head rv">
@@ -146,13 +149,13 @@ export default function HomeClient({
                 backed by <GlitchWord>real rent</GlitchWord>.
               </h2>
               <p>
-                A typical stablecoin lending rate hovers around 4%. RRWA pays
-                a fixed 12% APY, funded by rent collected across our listed
-                properties — not by borrowing demand that can dry up.
+                A typical stablecoin lending rate hovers around 4%. RRWA
+                properties pay up to {formatApyBps(maxApyBps)} APY, backed by
+                rent and revenue — not by borrowing demand that can dry up.
               </p>
             </div>
             <div className="rv">
-              <YieldChart />
+              <YieldChart topApyBps={maxApyBps} />
             </div>
           </div>
         </section>
@@ -163,12 +166,11 @@ export default function HomeClient({
             <div className="sec-head rv">
               <span className="eyebrow">Also on RRWA</span>
               <h2>
-                Prefer one property? <GlitchWord>Fund it directly</GlitchWord>.
+                Trade your position <GlitchWord>anytime</GlitchWord>.
               </h2>
               <p>
-                Alongside the yield pool, each listed property can still be
-                crowdfunded individually and traded on the secondary market.
-                Investing is limited to approved wallets while KYC rolls out.
+                Each property raise can be crowdfunded and traded on the
+                secondary market. See what&apos;s currently raising.
               </p>
             </div>
             <MarketPreview />
