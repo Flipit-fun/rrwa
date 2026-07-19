@@ -90,6 +90,12 @@ export function humanizeError(err: unknown): string {
   if (/NotFunded/i.test(msg)) {
     return "The raise isn't fully funded yet.";
   }
+  if (/NotAllowlisted/i.test(msg)) {
+    return "Your wallet isn't approved to invest yet. Contact us to get allowlisted.";
+  }
+  if (/InsufficientPrincipal/i.test(msg)) {
+    return "You can't withdraw more than your deposited principal.";
+  }
   // trim overly long RPC dumps
   return msg.length > 160 ? msg.slice(0, 157) + "..." : msg;
 }

@@ -14,6 +14,9 @@ export type AssetMetadata = {
   apyBps: number;
   kybStatus: string;
   coverImageUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  images?: { url: string; alt: string | null; sort: number }[];
 };
 
 /** Fetch metadata for a set of raise addresses, keyed by lowercase address. */
@@ -24,6 +27,7 @@ export async function getMetadataByRaiseAddresses(
   const lower = addresses.map((a) => a.toLowerCase());
   const rows = await prisma.asset.findMany({
     where: { raiseAddress: { in: lower } },
+    include: { images: { orderBy: { sort: "asc" } } },
   });
   const map: Record<string, AssetMetadata> = {};
   for (const r of rows) {
@@ -38,8 +42,18 @@ export async function getMetadataByRaiseAddress(
 ): Promise<AssetMetadata | null> {
   const row = await prisma.asset.findUnique({
     where: { raiseAddress: address.toLowerCase() },
+    include: { images: { orderBy: { sort: "asc" } } },
   });
   return row ? serialize(row) : null;
+}
+
+/** Fetch all seeded assets (used to power the "6 properties" showcase). */
+export async function getAllAssets(): Promise<AssetMetadata[]> {
+  const rows = await prisma.asset.findMany({
+    include: { images: { orderBy: { sort: "asc" } } },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.map(serialize);
 }
 
 type AssetRow = {
@@ -55,6 +69,9 @@ type AssetRow = {
   apyBps: number;
   kybStatus: string;
   coverImageUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  images?: { url: string; alt: string | null; sort: number }[];
 };
 
 function serialize(r: AssetRow): AssetMetadata {
@@ -71,5 +88,8 @@ function serialize(r: AssetRow): AssetMetadata {
     apyBps: r.apyBps,
     kybStatus: r.kybStatus,
     coverImageUrl: r.coverImageUrl,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    images: r.images,
   };
 }

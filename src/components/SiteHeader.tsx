@@ -11,6 +11,8 @@ export default function SiteHeader() {
           RRWA<em>.</em>
         </Link>
         <nav className="nav-links">
+          <Link href="/pool">Earn yield</Link>
+          <Link href="/properties">Properties</Link>
           <Link href="/market">Marketplace</Link>
           <Link href="/list">List your asset</Link>
           <Link href="/portfolio">Portfolio</Link>

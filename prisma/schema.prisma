@@ -47,6 +47,8 @@ model Asset {
   apyBps        Int
   kybStatus     KybStatus  @default(PENDING)
   coverImageUrl String?
+  latitude      Float?
+  longitude     Float?
   images        AssetImage[]
   kybDocs       KybDoc[]
   createdAt     DateTime   @default(now())

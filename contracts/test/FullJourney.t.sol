@@ -8,6 +8,7 @@ import { Raise } from "../src/Raise.sol";
 import { ShareToken } from "../src/ShareToken.sol";
 import { RentVault } from "../src/RentVault.sol";
 import { Marketplace } from "../src/Marketplace.sol";
+import { Allowlist } from "../src/Allowlist.sol";
 
 /**
  * @notice One continuous end-to-end journey through the whole protocol, in the
@@ -22,6 +23,7 @@ contract FullJourneyTest is Test {
     MockUSDC usdc;
     RRWAFactory factory;
     Marketplace marketplace;
+    Allowlist allowlist;
 
     address lister = makeAddr("lister");
     address alice = makeAddr("alice"); // funder 1
@@ -44,7 +46,10 @@ contract FullJourneyTest is Test {
 
     function setUp() public {
         usdc = new MockUSDC();
-        factory = new RRWAFactory(address(usdc));
+        allowlist = new Allowlist(owner);
+        vm.prank(owner);
+        allowlist.setRestricted(false); // journey test assumes open investing
+        factory = new RRWAFactory(address(usdc), address(allowlist));
         marketplace =
             new Marketplace(address(usdc), address(factory), treasury, owner);
 

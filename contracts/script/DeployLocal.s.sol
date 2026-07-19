@@ -6,6 +6,8 @@ import { MockUSDC } from "../test/mocks/MockUSDC.sol";
 import { RRWAFactory } from "../src/RRWAFactory.sol";
 import { Marketplace } from "../src/Marketplace.sol";
 import { Raise } from "../src/Raise.sol";
+import { Allowlist } from "../src/Allowlist.sol";
+import { YieldPool } from "../src/YieldPool.sol";
 
 /**
  * @notice Local-only deploy + seed for Anvil. Deploys a MockUSDC, the Factory
@@ -35,9 +37,21 @@ contract DeployLocal is Script {
         usdc.mint(deployer, 5_000_000e6);
 
         // 2. Core protocol.
-        RRWAFactory factory = new RRWAFactory(address(usdc));
+        Allowlist allowlist = new Allowlist(deployer);
+        // Local/dev convenience only: open the gate so any anvil account can
+        // fund a raise or the pool without a manual allowlist step. Mainnet
+        // deploys (Deploy.s.sol) leave `restricted` at its default of true.
+        allowlist.setRestricted(false);
+
+        RRWAFactory factory = new RRWAFactory(address(usdc), address(allowlist));
         Marketplace marketplace =
             new Marketplace(address(usdc), address(factory), deployer, deployer);
+
+        // 2b. Main product: pooled 12% APY on USDG deposits. Treasury pays
+        // yield, so it must hold USDG and approve the pool to pull it — the
+        // deployer plays treasury locally and self-approves below.
+        YieldPool pool = new YieldPool(address(usdc), address(allowlist), deployer, 1200, deployer);
+        usdc.approve(address(pool), type(uint256).max);
 
         // 3. Seed sample raises.
         // (a) A raise we fully fund + activate so yield + secondary market work.
@@ -63,8 +77,10 @@ contract DeployLocal is Script {
 
         console2.log("=== RRWA local deployment ===");
         console2.log("MockUSDC:            ", address(usdc));
+        console2.log("Allowlist:           ", address(allowlist));
         console2.log("RRWAFactory:         ", address(factory));
         console2.log("Marketplace:         ", address(marketplace));
+        console2.log("YieldPool:           ", address(pool));
         console2.log("Treasury (deployer): ", deployer);
         console2.log("Sample active raise: ", activeRaise);
         console2.log("Total raises:        ", factory.raisesCount());

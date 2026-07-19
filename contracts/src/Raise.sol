@@ -6,6 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ShareToken } from "./ShareToken.sol";
 import { RentVault } from "./RentVault.sol";
+import { Allowlist } from "./Allowlist.sol";
 
 /**
  * @title Raise
@@ -38,6 +39,7 @@ contract Raise is ReentrancyGuard {
     uint256 public immutable apyBps; // fixed APY, basis points
     ShareToken public immutable shareToken;
     RentVault public immutable rentVault;
+    Allowlist public immutable allowlist;
 
     State public state;
     uint256 public raised;
@@ -57,6 +59,7 @@ contract Raise is ReentrancyGuard {
     error NotActive();
     error NotMatured();
     error TermNotElapsed();
+    error NotAllowlisted();
 
     constructor(
         address usdc_,
@@ -64,13 +67,15 @@ contract Raise is ReentrancyGuard {
         uint256 target_,
         uint256 apyBps_,
         string memory assetName,
-        string memory shareSymbol
+        string memory shareSymbol,
+        address allowlist_
     ) {
         usdc = IERC20(usdc_);
         lister = lister_;
         target = target_;
         apyBps = apyBps_;
         state = State.Raising;
+        allowlist = Allowlist(allowlist_);
 
         shareToken = new ShareToken(assetName, shareSymbol, address(this));
         rentVault = new RentVault(usdc_, address(this));
@@ -103,6 +108,7 @@ contract Raise is ReentrancyGuard {
     function fund(uint256 amount) external nonReentrant {
         if (state != State.Raising) revert NotRaising();
         if (amount == 0) revert ZeroAmount();
+        if (!allowlist.isAllowed(msg.sender)) revert NotAllowlisted();
 
         uint256 remaining = target - raised;
         if (amount > remaining) revert ExceedsTarget(remaining);

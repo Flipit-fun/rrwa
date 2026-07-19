@@ -2,15 +2,20 @@
 pragma solidity ^0.8.24;
 
 import { Raise } from "./Raise.sol";
+import { Allowlist } from "./Allowlist.sol";
 
 /**
  * @title RRWAFactory
  * @notice Deploys a new Raise per listing and keeps an on-chain registry of
  *         every raise created. The frontend reads this registry to render the
  *         live marketplace, then merges each raise with its off-chain metadata.
+ *
+ *         Every Raise it deploys shares the same Allowlist, so the platform
+ *         owner manages one gate that covers every property raise.
  */
 contract RRWAFactory {
     address public immutable usdc;
+    Allowlist public immutable allowlist;
 
     address[] public raises;
     mapping(address => bool) public isRaise;
@@ -29,8 +34,9 @@ contract RRWAFactory {
     error ZeroTarget();
     error ZeroApy();
 
-    constructor(address usdc_) {
+    constructor(address usdc_, address allowlist_) {
         usdc = usdc_;
+        allowlist = Allowlist(allowlist_);
     }
 
     /**
@@ -47,7 +53,8 @@ contract RRWAFactory {
         if (target == 0) revert ZeroTarget();
         if (apyBps == 0) revert ZeroApy();
 
-        Raise raise = new Raise(usdc, msg.sender, target, apyBps, assetName, shareSymbol);
+        Raise raise =
+            new Raise(usdc, msg.sender, target, apyBps, assetName, shareSymbol, address(allowlist));
         raiseAddr = address(raise);
 
         raises.push(raiseAddr);

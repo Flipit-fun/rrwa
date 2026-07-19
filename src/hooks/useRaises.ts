@@ -116,6 +116,8 @@ async function onChainFallbackMeta(
       apyBps: summary.apyBps,
       kybStatus: "PENDING",
       coverImageUrl: null,
+      latitude: null,
+      longitude: null,
     };
   } catch {
     return null;

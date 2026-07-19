@@ -8,11 +8,13 @@ import { Raise } from "../src/Raise.sol";
 import { ShareToken } from "../src/ShareToken.sol";
 import { RentVault } from "../src/RentVault.sol";
 import { Marketplace } from "../src/Marketplace.sol";
+import { Allowlist } from "../src/Allowlist.sol";
 
 contract RRWATest is Test {
     MockUSDC usdc;
     RRWAFactory factory;
     Marketplace marketplace;
+    Allowlist allowlist;
 
     address lister = makeAddr("lister");
     address alice = makeAddr("alice");
@@ -26,7 +28,10 @@ contract RRWATest is Test {
 
     function setUp() public {
         usdc = new MockUSDC();
-        factory = new RRWAFactory(address(usdc));
+        allowlist = new Allowlist(platformOwner);
+        vm.prank(platformOwner);
+        allowlist.setRestricted(false); // legacy tests assume open investing
+        factory = new RRWAFactory(address(usdc), address(allowlist));
         marketplace = new Marketplace(address(usdc), address(factory), treasury, platformOwner);
 
         // fund actors
@@ -318,6 +323,35 @@ contract RRWATest is Test {
         vm.prank(lister);
         vm.expectRevert(RRWAFactory.ZeroTarget.selector);
         factory.createRaise(0, APY_BPS, "X", "X");
+    }
+
+    // ---- allowlist gating ----
+
+    function test_AllowlistBlocksFundingWhenRestricted() public {
+        vm.prank(platformOwner);
+        allowlist.setRestricted(true);
+
+        Raise raise = _createRaise();
+        _depositRent(raise);
+
+        vm.startPrank(alice);
+        usdc.approve(address(raise), 1_000e6);
+        vm.expectRevert(Raise.NotAllowlisted.selector);
+        raise.fund(1_000e6);
+        vm.stopPrank();
+
+        // approve alice specifically -> funding now succeeds
+        vm.prank(platformOwner);
+        allowlist.setAllowed(alice, true);
+        _fund(raise, alice, 1_000e6);
+        assertEq(raise.raised(), 1_000e6);
+
+        // bob is still blocked
+        vm.startPrank(bob);
+        usdc.approve(address(raise), 1_000e6);
+        vm.expectRevert(Raise.NotAllowlisted.selector);
+        raise.fund(1_000e6);
+        vm.stopPrank();
     }
 
     // ---- yield survives share transfer ----

@@ -57,35 +57,35 @@ export default function Home() {
             Robin Real World Assets — on Robinhood Chain
           </span>
           <h1 className="rv">
-            Own a piece of
+            Earn 12% APY
             <br />
-            the <GlitchWord>real world</GlitchWord>.
+            backed by <GlitchWord>real estate</GlitchWord>.
           </h1>
           <p className="sub rv">
-            A marketplace where real assets are funded by real people. List a
-            property to raise capital — or fund one, and earn a fixed APY paid
-            from rent secured through RRWA.
+            Deposit USDG and earn a fixed 12% annual yield, funded by rent
+            collected across real-world properties RRWA has listed — no
+            picking individual properties, no lockups.
           </p>
           <div className="hero-cta rv">
-            <Link href="/market" className="btn">
-              Browse assets <span className="arr">→</span>
+            <Link href="/pool" className="btn">
+              Start earning <span className="arr">→</span>
             </Link>
-            <Link href="/list" className="btn line">
-              List your asset
+            <Link href="/properties" className="btn line">
+              See the properties
             </Link>
           </div>
           <div className="hero-foot rv">
             <div className="hf">
-              <b>3 yrs</b>
-              <span>Rent secured</span>
+              <b>12%</b>
+              <span>Fixed APY</span>
             </div>
             <div className="hf">
-              <b>1:1</b>
-              <span>USDG to shares</span>
+              <b>6</b>
+              <span>Properties listed</span>
             </div>
             <div className="hf">
-              <b>50%</b>
-              <span>Early-exit fee</span>
+              <b>USDG</b>
+              <span>Deposit &amp; earn</span>
             </div>
             <div className="hf">
               <b>On chain</b>
@@ -94,17 +94,18 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Marketplace preview (live from chain) */}
+        {/* Marketplace preview (live from chain) — the individual-property side */}
         <section id="market">
           <div className="wrap">
             <div className="sec-head rv">
-              <span className="eyebrow">Marketplace</span>
+              <span className="eyebrow">Also on RRWA</span>
               <h2>
-                Two sides. One <GlitchWord>market</GlitchWord>.
+                Prefer one property? <GlitchWord>Fund it directly</GlitchWord>.
               </h2>
               <p>
-                Buy shares in assets raising right now, or list your own and let
-                the market fund it.
+                Alongside the yield pool, each listed property can still be
+                crowdfunded individually and traded on the secondary market.
+                Investing is limited to approved wallets while KYC rolls out.
               </p>
             </div>
             <MarketPreview />
