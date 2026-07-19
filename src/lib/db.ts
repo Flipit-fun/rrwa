@@ -10,7 +10,16 @@ const globalForPrisma = globalThis as unknown as {
 function createClient(): PrismaClient {
   const connectionString =
     process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? "";
-  const adapter = new PrismaPg({ connectionString });
+  // Supabase's Postgres (both the pooler and direct endpoints) requires SSL.
+  // node-postgres doesn't infer this from `sslmode=require` in the URL when
+  // used through the Prisma driver adapter, so it's set explicitly here.
+  // `rejectUnauthorized: false` matches Supabase's own connection guidance
+  // (their certs chain to a CA not always present in serverless runtimes).
+  const needsSsl = /supabase\.(co|com)/.test(connectionString);
+  const adapter = new PrismaPg({
+    connectionString,
+    ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+  });
   return new PrismaClient({
     adapter,
     log:

@@ -6,10 +6,11 @@
  * copyright. Coordinates are approximate, real-world locations for each city
  * so the map on the asset page has something accurate to point at.
  *
- * Run with: npx prisma db seed
- * (requires DATABASE_URL / DIRECT_URL pointed at a real Postgres instance —
- * this was written and type-checked but not executed against a live DB in
- * this environment, since no Postgres was available to connect to.)
+ * Run with: npm run db:seed
+ * Requires DATABASE_URL / DIRECT_URL pointed at your Supabase Postgres
+ * instance (Project Settings -> Database -> Connection string). This was
+ * written and type-checked but not executed against a live DB in this
+ * environment, since no Supabase credentials were available here.
  */
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
